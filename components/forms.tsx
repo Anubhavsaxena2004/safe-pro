@@ -42,7 +42,12 @@ export function ActionForm({
           } catch (err) {
             // Let Next.js handle redirects; show anything else as a friendly error.
             if (String((err as { digest?: string })?.digest ?? "").startsWith("NEXT_")) throw err;
-            result = { error: "Something went wrong. Please check your connection and try again." };
+            result = {
+              error:
+                typeof navigator !== "undefined" && !navigator.onLine
+                  ? "You're offline. Check your internet connection and try again."
+                  : "Something went wrong on our side. Please try again in a minute.",
+            };
           }
           setState(result);
           if (resetOnSuccess && !result?.error) form.reset();
