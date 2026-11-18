@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+/* Brand colours: swap these hex values for the official Kiddough palette. */
+@theme {
+  --color-brand-50: #f0fdfa;
+  --color-brand-100: #ccfbf1;
+  --color-brand-200: #99f6e4;
+  --color-brand-500: #14b8a6;
+  --color-brand-600: #0d9488;
+  --color-brand-700: #0f766e;
+  --color-brand-800: #115e59;
+  --color-brand-900: #134e4a;
+  --color-accent-400: #fb923c;
+  --color-accent-500: #f97316;
+  --font-sans: var(--font-nunito), ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply min-h-dvh bg-slate-50 text-slate-800 antialiased;
+  }
+}
+
+@layer components {
+  .card {
+    @apply rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5;
+  }
+  .label {
+    @apply mb-1 block text-sm font-bold text-slate-700;
+  }
+  .input {
+    @apply block w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900 placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-100 focus:outline-none disabled:bg-slate-100;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition select-none disabled:cursor-not-allowed disabled:opacity-60;
+  }
+  .btn-primary {
+    @apply bg-brand-700 text-white hover:bg-brand-800;
+  }
+  .btn-secondary {
+    @apply border border-slate-300 bg-white text-slate-800 hover:bg-slate-50;
+  }
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700;
+  }
+  .btn-ghost {
+    @apply text-brand-700 hover:bg-brand-50;
+  }
+  .table-wrap {
+    @apply overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm;
+  }
+  .table {
+    @apply w-full text-left text-sm;
+  }
+  .table th {
+    @apply bg-slate-50 px-3 py-2.5 text-xs font-bold tracking-wide whitespace-nowrap text-slate-500 uppercase;
+  }
+  .table td {
+    @apply border-t border-slate-100 px-3 py-2.5 align-top;
+  }
+  .tab {
+    @apply rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-bold whitespace-nowrap text-slate-600 hover:border-brand-500;
+  }
+  .tab-active {
+    @apply border-brand-700 bg-brand-700 text-white hover:border-brand-700;
+  }
+
+  /* Star rating: labels are in reverse order so "~" selects the lower stars. */
+  .stars {
+    @apply flex flex-row-reverse justify-end gap-1;
+  }
+  .stars label {
+    @apply cursor-pointer rounded text-4xl leading-none text-slate-300;
+  }
+  .stars label:hover,
+  .stars label:hover ~ label,
+  .stars label:has(input:checked),
+  .stars label:has(input:checked) ~ label {
+    @apply text-amber-400;
+  }
+  .stars label:has(input:focus-visible) {
+    @apply outline-2 outline-brand-600;
+  }
+}

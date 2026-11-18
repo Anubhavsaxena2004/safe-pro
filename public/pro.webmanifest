@@ -1,0 +1,16 @@
+{
+  "id": "/pro",
+  "name": "Kiddough Safe Pro",
+  "short_name": "Safe Pro",
+  "description": "Jobs, check-ins, photos and earnings for Kiddough Safe Pros.",
+  "start_url": "/pro",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#0f766e",
+  "icons": [
+    { "src": "/icons/192", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/512", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/512", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
