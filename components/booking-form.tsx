@@ -12,6 +12,7 @@ export function BookingForm({
   submitLabel,
   showPrices = true,
   verifyPhone = false,
+  stickySubmit = false,
 }: {
   action: (prev: FormState, fd: FormData) => Promise<FormState>;
   services: Service[];
@@ -21,9 +22,11 @@ export function BookingForm({
   showPrices?: boolean;
   /** Customer confirms their mobile number with an OTP before booking. */
   verifyPhone?: boolean;
+  /** On phones, pin the submit button to the bottom of the screen. */
+  stickySubmit?: boolean;
 }) {
   return (
-    <ActionForm action={action} className="space-y-6">
+    <ActionForm action={action} className={stickySubmit ? "space-y-6 max-sm:pb-bar" : "space-y-6"}>
       <fieldset className="space-y-2">
         <legend className="label">Service</legend>
         {services.map((s, i) => (
@@ -31,7 +34,7 @@ export function BookingForm({
             key={s.id}
             className="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 has-checked:border-brand-600 has-checked:bg-brand-50"
           >
-            <input type="radio" name="service_id" value={s.id} defaultChecked={i === 0} required className="mt-1 size-4 accent-brand-700" />
+            <input type="radio" name="service_id" value={s.id} defaultChecked={i === 0} required className="mt-0.5 size-5 shrink-0 accent-brand-700" />
             <span className="min-w-0 flex-1">
               <span className="flex flex-wrap items-baseline justify-between gap-2">
                 <span className="font-extrabold text-slate-900">{s.name}</span>
@@ -86,16 +89,20 @@ export function BookingForm({
 
       <fieldset>
         <legend className="label">Time slot</legend>
-        <div className="grid gap-2 sm:grid-cols-3">
-          {SLOTS.map((slot, i) => (
-            <label
-              key={slot.value}
-              className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold has-checked:border-brand-600 has-checked:bg-brand-50"
-            >
-              <input type="radio" name="preferred_slot" value={slot.value} defaultChecked={i === 0} className="accent-brand-700" />
-              {slot.label}
-            </label>
-          ))}
+        <div className="grid grid-cols-3 gap-2">
+          {SLOTS.map((slot, i) => {
+            const [name, time] = slot.label.split(" (");
+            return (
+              <label
+                key={slot.value}
+                className="flex min-h-16 cursor-pointer flex-col items-center justify-center rounded-xl border border-slate-300 bg-white px-1 text-center transition has-checked:border-brand-700 has-checked:bg-brand-50 has-checked:ring-2 has-checked:ring-brand-100 has-focus-visible:ring-4 has-focus-visible:ring-brand-100"
+              >
+                <input type="radio" name="preferred_slot" value={slot.value} defaultChecked={i === 0} className="sr-only" />
+                <span className="text-sm font-extrabold text-slate-900">{name}</span>
+                <span className="text-xs text-slate-500">{time?.replace(")", "").replace(/\s/g, "")}</span>
+              </label>
+            );
+          })}
         </div>
       </fieldset>
 
@@ -104,13 +111,30 @@ export function BookingForm({
       </Field>
 
       <label className="flex items-start gap-3 text-sm text-slate-700">
-        <input type="checkbox" name="consent" required className="mt-0.5 size-4 accent-brand-700" />
+        <input type="checkbox" name="consent" required className="mt-0.5 size-5 shrink-0 accent-brand-700" />
         <span>{consentLabel}</span>
       </label>
 
-      <SubmitButton className="w-full py-3 text-base sm:w-auto sm:px-8" pendingText="Booking…">
-        {submitLabel}
-      </SubmitButton>
+      {stickySubmit ? (
+        <>
+          <div className="action-bar sm:hidden">
+            <div className="action-bar-inner">
+              <SubmitButton className="btn-lg w-full" pendingText="Booking…">
+                {submitLabel}
+              </SubmitButton>
+            </div>
+          </div>
+          <div className="hidden sm:block">
+            <SubmitButton className="btn-lg px-8" pendingText="Booking…">
+              {submitLabel}
+            </SubmitButton>
+          </div>
+        </>
+      ) : (
+        <SubmitButton className="btn-lg w-full sm:w-auto sm:px-8" pendingText="Booking…">
+          {submitLabel}
+        </SubmitButton>
+      )}
     </ActionForm>
   );
 }

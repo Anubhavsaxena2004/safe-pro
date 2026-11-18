@@ -2,45 +2,86 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { FormMessage } from "@/components/forms";
-import { Field } from "@/components/ui";
+import { IconBriefcase, IconCamera, IconChevronLeft, IconUser, IconWallet, IconX } from "@/components/icons";
+import { Logo } from "@/components/site-header";
 import { getPosition, hasLocationPermission } from "@/lib/client/geo";
 import { compressImage } from "@/lib/client/image";
 import type { FormState } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { checkIn, completeJob, deleteJobPhoto, pingLocation, setOnline, uploadJobPhoto } from "./actions";
+import { acceptJob, checkIn, completeJob, deleteJobPhoto, pingLocation, rejectJob, setOnline, uploadJobPhoto } from "./actions";
 
-// ---------- Navigation ----------
+const isJobPage = (pathname: string) => pathname.startsWith("/pro/jobs/");
+
+// ---------- App chrome ----------
+
+export function ProHeader({ name, online }: { name: string; online: boolean }) {
+  const pathname = usePathname();
+  return (
+    <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 pt-safe backdrop-blur">
+      <div className="flex h-14 items-center justify-between gap-3 px-4">
+        {isJobPage(pathname) ? (
+          <Link href="/pro" className="-ml-2 flex min-h-11 items-center gap-0.5 rounded-lg pr-2 text-[17px] font-extrabold text-slate-900">
+            <IconChevronLeft size={26} />
+            Jobs
+          </Link>
+        ) : (
+          <Link href="/pro" aria-label="Jobs">
+            <Logo sub="Safe Pro" />
+          </Link>
+        )}
+        <Link href="/pro/profile" className="-mr-2 flex min-h-11 items-center gap-2 rounded-full px-2 text-sm font-bold text-slate-700">
+          <span className={cn("size-2.5 rounded-full", online ? "bg-emerald-500" : "bg-slate-300")} aria-label={online ? "Online" : "Offline"} />
+          {name}
+        </Link>
+      </div>
+    </header>
+  );
+}
 
 const NAV = [
-  { href: "/pro", label: "Jobs", icon: "M3 7h18M3 12h18M3 17h12" },
-  { href: "/pro/earnings", label: "Earnings", icon: "M12 3v18M17 7H9.5a3 3 0 0 0 0 6h5a3 3 0 0 1 0 6H6" },
-  { href: "/pro/profile", label: "Profile", icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 9a7 7 0 0 1 14 0" },
+  { href: "/pro", label: "Jobs", Icon: IconBriefcase },
+  { href: "/pro/earnings", label: "Earnings", Icon: IconWallet },
+  { href: "/pro/profile", label: "Profile", Icon: IconUser },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
+  if (isJobPage(pathname)) return null; // job screens use their own action bar
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white pb-[env(safe-area-inset-bottom)]">
-      <div className="mx-auto grid max-w-lg grid-cols-3">
-        {NAV.map((item) => {
-          const active = item.href === "/pro" ? pathname === "/pro" || pathname.startsWith("/pro/jobs") : pathname.startsWith(item.href);
+    <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-slate-200 bg-white/95 pb-safe backdrop-blur" aria-label="Main">
+      <div className="mx-auto grid h-16 max-w-md grid-cols-3">
+        {NAV.map(({ href, label, Icon }) => {
+          const active = href === "/pro" ? pathname === "/pro" : pathname.startsWith(href);
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn("flex flex-col items-center gap-0.5 py-2.5 text-xs font-bold", active ? "text-brand-700" : "text-slate-500")}
-            >
-              <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                <path d={item.icon} />
-              </svg>
-              {item.label}
+            <Link key={href} href={href} aria-current={active ? "page" : undefined} className="flex flex-col items-center justify-center gap-1">
+              <span
+                className={cn(
+                  "flex h-8 w-16 items-center justify-center rounded-full transition-colors",
+                  active ? "bg-brand-100 text-brand-800" : "text-slate-500",
+                )}
+              >
+                <Icon size={22} strokeWidth={active ? 2.4 : 2} />
+              </span>
+              <span className={cn("text-xs font-bold", active ? "text-brand-800" : "text-slate-500")}>{label}</span>
             </Link>
           );
         })}
       </div>
     </nav>
+  );
+}
+
+/** Fixed bar at the bottom of the screen for the main action. */
+function ActionBar({ children, message }: { children: ReactNode; message?: FormState }) {
+  return (
+    <div className="action-bar">
+      <div className="mx-auto max-w-md px-4 pt-3">
+        <FormMessage state={message} />
+      </div>
+      <div className="action-bar-inner pt-0">{children}</div>
+    </div>
   );
 }
 
@@ -51,11 +92,17 @@ export function OnlineToggle({ online }: { online: boolean }) {
   const [note, setNote] = useState<string | null>(null);
 
   return (
-    <div className="card flex items-center justify-between gap-4">
-      <div>
-        <p className="font-extrabold text-slate-900">{online ? "You're online" : "You're offline"}</p>
-        <p className="text-sm text-slate-500">{online ? "You can receive new jobs." : "Go online to receive new jobs."}</p>
-        {note && <p className="mt-1 text-xs font-semibold text-amber-700">{note}</p>}
+    <div className={cn("card flex items-center justify-between gap-4 transition-colors", online && "border-emerald-200 bg-emerald-50")}>
+      <div className="flex min-w-0 items-center gap-3">
+        <span className="relative flex size-3 shrink-0">
+          {online && <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />}
+          <span className={cn("relative inline-flex size-3 rounded-full", online ? "bg-emerald-500" : "bg-slate-300")} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[17px] font-extrabold text-slate-900">{online ? "You're online" : "You're offline"}</p>
+          <p className="text-sm text-slate-500">{online ? "You can receive new jobs." : "Go online to receive new jobs."}</p>
+          {note && <p className="mt-1 text-xs font-semibold text-amber-700">{note}</p>}
+        </div>
       </div>
       <button
         type="button"
@@ -70,9 +117,11 @@ export function OnlineToggle({ online }: { online: boolean }) {
             await setOnline(!online, pos?.lat ?? null, pos?.lng ?? null);
           })
         }
-        className={cn("relative h-8 w-14 shrink-0 rounded-full transition disabled:opacity-60", online ? "bg-emerald-500" : "bg-slate-300")}
+        className="-mr-1 flex h-11 w-16 shrink-0 items-center justify-center rounded-full disabled:opacity-60"
       >
-        <span className={cn("absolute top-1 size-6 rounded-full bg-white shadow transition-all", online ? "left-7" : "left-1")} />
+        <span className={cn("relative h-8 w-14 rounded-full transition-colors", online ? "bg-emerald-500" : "bg-slate-300")}>
+          <span className={cn("absolute top-1 left-1 size-6 rounded-full bg-white shadow transition-transform", online && "translate-x-6")} />
+        </span>
       </button>
     </div>
   );
@@ -97,29 +146,148 @@ export function LocationPing() {
   return null;
 }
 
-// ---------- Job actions ----------
+// ---------- New job: accept / decline ----------
 
-export function CheckInButton({ bookingId }: { bookingId: number }) {
+export function AcceptDeclineBar({ bookingId }: { bookingId: number }) {
+  const [pending, start] = useTransition();
+  const [state, setState] = useState<FormState>();
+  const [sheetOpen, setSheetOpen] = useState(false);
+  return (
+    <>
+      <ActionBar message={state}>
+        <button type="button" onClick={() => setSheetOpen(true)} disabled={pending} className="btn btn-secondary btn-lg flex-1">
+          Decline
+        </button>
+        <button
+          type="button"
+          disabled={pending}
+          className="btn btn-primary btn-lg flex-[2]"
+          onClick={() =>
+            start(async () => {
+              const fd = new FormData();
+              fd.set("booking_id", String(bookingId));
+              setState(await acceptJob(undefined, fd).catch(() => ({ error: "Couldn't accept. Check your connection." })));
+            })
+          }
+        >
+          {pending ? "Accepting…" : "Accept job"}
+        </button>
+      </ActionBar>
+      <DeclineSheet bookingId={bookingId} open={sheetOpen} onClose={() => setSheetOpen(false)} title="Decline this job?" />
+    </>
+  );
+}
+
+export function ReleaseJobButton({ bookingId }: { bookingId: number }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="min-h-11 w-full rounded-xl text-sm font-bold text-slate-500">
+        Can&apos;t make it? Give this job back
+      </button>
+      <DeclineSheet bookingId={bookingId} open={open} onClose={() => setOpen(false)} title="Give this job back?" />
+    </>
+  );
+}
+
+const DECLINE_REASONS = ["Too far from me", "Not available at that time", "Don't have the right tools", "Other"];
+
+function DeclineSheet({ bookingId, open, onClose, title }: { bookingId: number; open: boolean; onClose: () => void; title: string }) {
+  const [pending, start] = useTransition();
+  const [state, setState] = useState<FormState>();
+  const [reason, setReason] = useState(DECLINE_REASONS[0]);
+  const [details, setDetails] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  const needsDetails = reason === "Other";
+
+  return (
+    <>
+      <div className="sheet-backdrop" onClick={onClose} />
+      <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="decline-title">
+        <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-300" />
+        <div className="flex items-center justify-between gap-3">
+          <h2 id="decline-title" className="text-lg font-extrabold text-slate-900">
+            {title}
+          </h2>
+          <button type="button" onClick={onClose} aria-label="Close" className="-mr-2 flex size-11 items-center justify-center rounded-full text-slate-500">
+            <IconX size={22} />
+          </button>
+        </div>
+        <p className="mt-1 text-sm text-slate-600">It will be offered to another Safe Pro. Please tell us why.</p>
+        <form
+          className="mt-4 space-y-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const fd = new FormData();
+            fd.set("booking_id", String(bookingId));
+            fd.set("reason", needsDetails ? details.trim() : details.trim() ? `${reason}: ${details.trim()}` : reason);
+            start(async () => setState(await rejectJob(undefined, fd).catch(() => ({ error: "Couldn't send. Check your connection." }))));
+          }}
+        >
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
+            {DECLINE_REASONS.map((r) => (
+              <label key={r} className="chip">
+                <input type="radio" name="reason_choice" value={r} checked={reason === r} onChange={() => setReason(r)} className="sr-only" />
+                {r}
+              </label>
+            ))}
+          </div>
+          <textarea
+            value={details}
+            onChange={(e) => setDetails(e.target.value)}
+            required={needsDetails}
+            rows={2}
+            maxLength={250}
+            placeholder={needsDetails ? "Tell us the reason" : "Anything else? (optional)"}
+            className="input"
+          />
+          <FormMessage state={state} />
+          <button type="submit" disabled={pending || (needsDetails && !details.trim())} className="btn btn-danger btn-lg w-full">
+            {pending ? "Sending…" : "Give job back"}
+          </button>
+        </form>
+      </div>
+    </>
+  );
+}
+
+// ---------- Visit ----------
+
+export function CheckInBar({ bookingId }: { bookingId: number }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<FormState>();
   return (
-    <div>
-      <button
-        type="button"
-        disabled={pending}
-        className="btn btn-primary w-full py-3 text-base"
-        onClick={() =>
-          start(async () => {
-            const pos = await getPosition();
-            setState(await checkIn(bookingId, pos?.lat ?? null, pos?.lng ?? null));
-          })
-        }
-      >
-        {pending ? "Getting your location…" : "I've arrived · Check in"}
-      </button>
-      <p className="mt-2 text-center text-xs text-slate-500">Your location is recorded when you check in.</p>
-      <FormMessage state={state} />
-    </div>
+    <ActionBar message={state}>
+      <div className="flex-1">
+        <button
+          type="button"
+          disabled={pending}
+          className="btn btn-primary btn-lg w-full"
+          onClick={() =>
+            start(async () => {
+              const pos = await getPosition();
+              setState(await checkIn(bookingId, pos?.lat ?? null, pos?.lng ?? null).catch(() => ({ error: "Couldn't check in. Try again." })));
+            })
+          }
+        >
+          {pending ? "Getting your location…" : "I've arrived · Check in"}
+        </button>
+        <p className="mt-1.5 text-center text-xs text-slate-500">Your location is recorded when you check in.</p>
+      </div>
+    </ActionBar>
   );
 }
 
@@ -161,15 +329,21 @@ export function PhotoUploader({ bookingId }: { bookingId: number }) {
           });
         }}
       />
-      <div className="grid grid-cols-2 gap-2">
-        <button type="button" disabled={pending} onClick={() => pick("before")} className="btn btn-secondary py-3">
-          + Before photo
-        </button>
-        <button type="button" disabled={pending} onClick={() => pick("after")} className="btn btn-secondary py-3">
-          + After photo
-        </button>
+      <div className="grid grid-cols-2 gap-3">
+        {(["before", "after"] as const).map((kind) => (
+          <button
+            key={kind}
+            type="button"
+            disabled={pending}
+            onClick={() => pick(kind)}
+            className="flex h-24 flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 text-slate-700 transition active:scale-[0.98] disabled:opacity-60"
+          >
+            <IconCamera size={26} className="text-brand-700" />
+            <span className="text-sm font-extrabold">{kind === "before" ? "Before photo" : "After photo"}</span>
+          </button>
+        ))}
       </div>
-      {pending && <p className="mt-2 text-sm text-slate-500">Uploading…</p>}
+      {pending && <p className="mt-2 text-center text-sm font-semibold text-slate-500">Uploading…</p>}
       <FormMessage state={state} />
     </div>
   );
@@ -186,16 +360,20 @@ export function JobPhotos({ photos, canDelete }: { photos: { id: number; kind: s
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={p.src} alt={`${p.kind} photo`} className="aspect-square w-full object-cover" loading="lazy" />
           </a>
-          <span className="absolute left-1 top-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white uppercase">{p.kind}</span>
+          <span className="absolute bottom-1.5 left-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-extrabold tracking-wide text-white uppercase">
+            {p.kind}
+          </span>
           {canDelete && (
             <button
               type="button"
               disabled={pending}
               aria-label="Remove photo"
               onClick={() => confirm("Remove this photo?") && start(async () => void (await deleteJobPhoto(p.id)))}
-              className="absolute top-1 right-1 flex size-7 items-center justify-center rounded-full bg-black/60 text-sm font-bold text-white"
+              className="absolute top-0 right-0 flex size-11 items-center justify-center"
             >
-              ×
+              <span className="flex size-7 items-center justify-center rounded-full bg-black/60 text-white">
+                <IconX size={15} strokeWidth={2.8} />
+              </span>
             </button>
           )}
         </div>
@@ -207,6 +385,12 @@ export function JobPhotos({ photos, canDelete }: { photos: { id: number; kind: s
 export function CompleteJobForm({ bookingId }: { bookingId: number }) {
   const [pending, start] = useTransition();
   const [state, setState] = useState<FormState>();
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (state?.error) messageRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [state]);
+
   return (
     <form
       className="space-y-4"
@@ -225,7 +409,10 @@ export function CompleteJobForm({ bookingId }: { bookingId: number }) {
       }}
     >
       <input type="hidden" name="booking_id" value={bookingId} />
-      <Field label="Work notes & measurements" htmlFor="pro_notes">
+      <div>
+        <label className="label" htmlFor="pro_notes">
+          Work notes &amp; measurements
+        </label>
         <textarea
           id="pro_notes"
           name="pro_notes"
@@ -233,8 +420,11 @@ export function CompleteJobForm({ bookingId }: { bookingId: number }) {
           placeholder="What you installed or checked, measurements, advice for the parents"
           className="input"
         />
-      </Field>
-      <Field label="Customer's 4-digit code" htmlFor="code" hint="Ask the customer for the code shown on their booking page.">
+      </div>
+      <div>
+        <label className="label" htmlFor="code">
+          Customer&apos;s 4-digit code
+        </label>
         <input
           id="code"
           name="code"
@@ -243,13 +433,21 @@ export function CompleteJobForm({ bookingId }: { bookingId: number }) {
           autoComplete="one-time-code"
           maxLength={4}
           pattern="\d{4}"
-          className="input text-center text-2xl font-extrabold tracking-[0.5em]"
+          placeholder="• • • •"
+          className="input h-14 text-center font-mono text-2xl font-extrabold tracking-[0.6em] placeholder:tracking-[0.3em]"
         />
-      </Field>
-      <button type="submit" disabled={pending} className="btn btn-primary w-full py-3 text-base">
-        {pending ? "Completing…" : "Complete job"}
-      </button>
-      <FormMessage state={state} />
+        <p className="mt-1.5 text-xs text-slate-500">Ask the customer for the code shown on their booking page.</p>
+      </div>
+      <div ref={messageRef} className="scroll-mb-32">
+        <FormMessage state={state} />
+      </div>
+      <div className="action-bar">
+        <div className="action-bar-inner">
+          <button type="submit" disabled={pending} className="btn btn-primary btn-lg w-full">
+            {pending ? "Completing…" : "Complete job"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

@@ -18,19 +18,20 @@ export default async function BookPage() {
   return (
     <>
       <SiteHeader />
-      <main className="mx-auto max-w-2xl px-4 py-8">
-        <h1 className="text-2xl font-extrabold text-slate-900">Book a home visit</h1>
-        <p className="mt-1 mb-6 text-sm text-slate-600">A verified Kiddough Safe Pro will visit at your chosen time. We&apos;ll confirm the booking by phone.</p>
+      <main className="mx-auto max-w-2xl px-4 pt-5 pb-8 sm:pt-8">
+        <h1 className="text-[26px] leading-tight font-extrabold text-slate-900">Book a home visit</h1>
+        <p className="mt-1.5 mb-5 text-[15px] text-slate-600">A verified Kiddough Safe Pro will visit at your chosen time. We&apos;ll confirm the booking by phone.</p>
         {services.length === 0 || cities.length === 0 ? (
           <EmptyState>Bookings are not open yet. Please check back soon.</EmptyState>
         ) : (
-          <div className="card">
+          <div className="sm:rounded-2xl sm:border sm:border-slate-200 sm:bg-white sm:p-6 sm:shadow-sm">
             <BookingForm
               action={createBooking}
               services={services}
               cities={cities}
               submitLabel="Confirm booking"
               verifyPhone
+              stickySubmit
               consentLabel="I agree to a Kiddough Safe Pro visiting my home, and to photos of the installed products (not of my children) being taken for the service report."
             />
           </div>

@@ -18,10 +18,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-dvh lg:flex">
-      <aside className="border-b border-slate-200 bg-white lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0">
-        <div className="flex items-center justify-between gap-3 px-4 py-3 lg:py-5">
-          <Link href="/admin">
+      <aside className="border-b border-slate-200 bg-white pt-safe lg:sticky lg:top-0 lg:flex lg:h-dvh lg:w-60 lg:shrink-0 lg:flex-col lg:border-r lg:border-b-0">
+        <div className="flex h-14 items-center justify-between gap-3 px-4 lg:h-auto lg:py-5">
+          <Link href="/admin" className="min-w-0">
             <Logo sub="Admin" />
+          </Link>
+          <Link href="/admin/bookings/new" className="btn btn-primary shrink-0 px-3 lg:hidden">
+            + New
           </Link>
         </div>
         <div className="px-3 pb-3 lg:flex-1">
@@ -43,7 +46,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <main className="min-w-0 flex-1 px-4 py-6 lg:px-8">
         <div className="mx-auto max-w-6xl">{children}</div>
         <form action={logoutAdmin} className="mt-10 text-center lg:hidden">
-          <button type="submit" className="text-sm font-bold text-slate-500">
+          <button type="submit" className="min-h-11 px-3 text-sm font-bold text-slate-500">
             Log out ({admin.email})
           </button>
         </form>

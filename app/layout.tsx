@@ -11,10 +11,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: { icon: "/icon.svg", apple: "/icons/180" },
   appleWebApp: { capable: true, title: "Kiddough", statusBarStyle: "default" },
+  // Stop iOS from turning booking codes and OTPs into phone-number links.
+  formatDetection: { telephone: false, address: false, email: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f766e",
+  // Matches the white app headers so the phone's status bar blends in.
+  themeColor: "#ffffff",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

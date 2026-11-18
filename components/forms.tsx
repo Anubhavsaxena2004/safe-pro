@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
+import { IconCamera } from "@/components/icons";
 import { compressImage } from "@/lib/client/image";
 import type { FormState } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,12 @@ export function ActionForm({
 }) {
   const [state, setState] = useState<FormState>();
   const [pending, startTransition] = useTransition();
+  const messageRef = useRef<HTMLDivElement>(null);
+
+  // On a phone the message can be below the fold or behind a sticky button: bring it into view.
+  useEffect(() => {
+    if (state?.error) messageRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [state]);
 
   return (
     <form
@@ -50,7 +57,9 @@ export function ActionForm({
       }}
     >
       <PendingContext.Provider value={pending}>{children}</PendingContext.Provider>
-      <FormMessage state={state} />
+      <div ref={messageRef} className="scroll-mb-28">
+        <FormMessage state={state} />
+      </div>
     </form>
   );
 }
@@ -106,14 +115,32 @@ export function ImageInput({ name, required, capture }: { name: string; required
   }, []);
 
   return (
-    <div className="space-y-2">
+    <label
+      className={cn(
+        "relative flex min-h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-4 text-center transition active:scale-[0.99] has-focus-visible:ring-4 has-focus-visible:ring-brand-100",
+        preview ? "border-brand-300 bg-brand-50/50" : "border-slate-300 bg-slate-50",
+      )}
+    >
+      {preview ? (
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={preview} alt="Selected" className="max-h-48 rounded-xl object-contain" />
+          <span className="text-sm font-bold text-brand-700">Change photo</span>
+        </>
+      ) : (
+        <>
+          <IconCamera size={28} className="text-brand-700" />
+          <span className="text-[15px] font-extrabold text-slate-800">{busy ? "Preparing photo…" : "Tap to take or choose a photo"}</span>
+          <span className="text-xs text-slate-500">Make sure all text is readable</span>
+        </>
+      )}
       <input
         type="file"
         name={name}
         accept="image/*"
         required={required}
         {...(capture ? { capture: "environment" as const } : {})}
-        className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-xl file:border-0 file:bg-brand-50 file:px-4 file:py-2.5 file:text-sm file:font-bold file:text-brand-800"
+        className="sr-only"
         onChange={async (e) => {
           const input = e.currentTarget;
           const file = input.files?.[0];
@@ -136,11 +163,6 @@ export function ImageInput({ name, required, capture }: { name: string; required
           }
         }}
       />
-      {busy && <p className="text-xs text-slate-500">Preparing photo…</p>}
-      {preview && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={preview} alt="Selected" className="h-32 rounded-xl border border-slate-200 object-cover" />
-      )}
-    </div>
+    </label>
   );
 }

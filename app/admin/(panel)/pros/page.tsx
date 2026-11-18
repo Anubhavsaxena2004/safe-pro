@@ -77,7 +77,36 @@ export default async function AdminProsPage({ searchParams }: { searchParams: Pr
       {pros.length === 0 ? (
         <EmptyState>No Safe Pros found. Share the registration link: /pro/register</EmptyState>
       ) : (
-        <div className="table-wrap">
+        <>
+        {/* Phones: one card per Safe Pro */}
+        <ul className="space-y-2 md:hidden">
+          {pros.map((p) => (
+            <li key={p.id}>
+              <Link href={`/admin/pros/${p.id}`} className="card block p-3.5 transition active:scale-[0.99]">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate font-extrabold text-slate-900">{p.name}</p>
+                    <p className="text-sm text-slate-500">
+                      {p.phone} · {p.city} {p.pincode}
+                    </p>
+                  </div>
+                  <ProStatusBadge status={p.status} />
+                </div>
+                <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
+                  <Badge tone={p.aadhaar_verified ? (p.kyc_mode === "demo" ? "amber" : "green") : "gray"}>
+                    {p.aadhaar_verified ? `Aadhaar ✓${p.kyc_mode === "demo" ? " (demo)" : ""}` : "Aadhaar not verified"}
+                  </Badge>
+                  {p.status === "approved" && <Badge tone={p.is_online ? "green" : "gray"}>{p.is_online ? "Online" : "Offline"}</Badge>}
+                  <span className="text-slate-500">
+                    {p.experience_years} yrs · {p.done} done · {p.active} active
+                    {p.avg_rating ? ` · ★ ${p.avg_rating}` : ""}
+                  </span>
+                </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <div className="table-wrap hidden md:block">
           <table className="table">
             <thead>
               <tr>
@@ -137,6 +166,7 @@ export default async function AdminProsPage({ searchParams }: { searchParams: Pr
             </tbody>
           </table>
         </div>
+        </>
       )}
     </>
   );

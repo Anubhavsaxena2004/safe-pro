@@ -28,6 +28,17 @@ export function slotLabel(value: string) {
   return SLOTS.find((s) => s.value === value)?.label ?? value;
 }
 
+/** Compact slot for small screens, e.g. "9am–12pm". */
+export function slotShort(value: string) {
+  return ({ morning: "9am–12pm", afternoon: "12pm–4pm", evening: "4pm–8pm" } as Record<string, string>)[value] ?? value;
+}
+
+/** Short DATE label, e.g. "Thu, 20 Nov". */
+export function fmtShortDate(d: Date | string) {
+  const date = typeof d === "string" ? new Date(d.slice(0, 10) + "T00:00:00Z") : d;
+  return date.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+}
+
 export function inr(amount: number | null | undefined) {
   return "₹" + Number(amount ?? 0).toLocaleString("en-IN");
 }

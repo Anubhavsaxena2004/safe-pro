@@ -27,19 +27,21 @@ export default function Home() {
     <>
       <SiteHeader />
       <main className="mx-auto max-w-5xl px-4">
-        <section className="py-10 sm:py-16">
+        <section className="pt-8 pb-8 sm:py-16">
           <p className="mb-3 inline-block rounded-full bg-accent-500/10 px-3 py-1 text-xs font-extrabold tracking-wide text-accent-500 uppercase">
             Home child-safety service
           </p>
-          <h1 className="max-w-2xl text-3xl font-extrabold text-slate-900 sm:text-5xl">A safer home for your little one</h1>
-          <p className="mt-4 max-w-xl text-base text-slate-600 sm:text-lg">
+          <h1 className="max-w-2xl text-[32px] leading-[1.15] font-extrabold tracking-tight text-slate-900 sm:text-5xl">
+            A safer home for your little one
+          </h1>
+          <p className="mt-3 max-w-xl text-base text-slate-600 sm:mt-4 sm:text-lg">
             Trained Kiddough Safe Pros check your home, install baby-proofing products and service them, at a time that suits you.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/book" className="btn btn-primary px-6 py-3 text-base">
+          <div className="mt-6 grid gap-3 sm:flex">
+            <Link href="/book" className="btn btn-primary btn-lg sm:px-6">
               Book a home visit
             </Link>
-            <Link href="/track" className="btn btn-secondary px-6 py-3 text-base">
+            <Link href="/track" className="btn btn-secondary btn-lg sm:px-6">
               Track a booking
             </Link>
           </div>
@@ -74,7 +76,7 @@ export default function Home() {
             <h2 className="text-xl font-extrabold">Are you a skilled installer?</h2>
             <p className="mt-1 text-sm text-brand-100">Join Kiddough as a Safe Pro. Get jobs near you and track your earnings.</p>
           </div>
-          <Link href="/pro/register" className="btn bg-white px-5 text-brand-800 hover:bg-brand-50">
+          <Link href="/pro/register" className="btn btn-lg w-full bg-white px-5 text-brand-800 hover:bg-brand-50 sm:w-auto">
             Join as a Safe Pro
           </Link>
         </section>

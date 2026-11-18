@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { acceptJob, rejectJob } from "@/app/pro/actions";
-import { CheckInButton, CompleteJobForm, JobPhotos, PhotoUploader } from "@/app/pro/pro-client";
-import { ActionForm, SubmitButton } from "@/components/forms";
-import { Badge, BookingStatusBadge, Card, InfoList } from "@/components/ui";
+import type { ReactNode } from "react";
+import { AcceptDeclineBar, CheckInBar, CompleteJobForm, JobPhotos, PhotoUploader, ReleaseJobButton } from "@/app/pro/pro-client";
+import { IconCalendar, IconClock, IconInfo, IconMapPin, IconNavigation, IconNote, IconPhone, IconStar } from "@/components/icons";
+import { Badge, BookingStatusBadge, Card } from "@/components/ui";
 import { requireApprovedPro } from "@/lib/auth";
 import { getBooking, getPhotos } from "@/lib/bookings";
 import { fileSrc } from "@/lib/upload";
@@ -24,84 +23,75 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <Link href="/pro" className="text-sm font-bold text-brand-700">
-          ← Jobs
-        </Link>
-        <span className="text-xs font-bold text-slate-500">{b.ref}</span>
-      </div>
-
-      <Card>
+      <section className="card">
         <div className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-xl font-extrabold text-slate-900">{b.service_name}</h1>
-            <p className="text-sm text-slate-600">
-              {fmtDate(b.preferred_date)} · {slotLabel(b.preferred_slot)}
-            </p>
+          <div className="min-w-0">
+            <p className="text-xs font-bold tracking-wide text-slate-500">{b.ref}</p>
+            <h1 className="mt-0.5 text-xl leading-tight font-extrabold text-slate-900">{b.service_name}</h1>
           </div>
           <BookingStatusBadge status={b.status} />
         </div>
-        <div className="mt-3 flex items-center justify-between rounded-xl bg-brand-50 px-3 py-2">
-          <span className="text-sm font-bold text-brand-900">You earn</span>
-          <span className="text-lg font-extrabold text-brand-900">{inr(b.pro_payout)}</span>
+        <div className="mt-3 space-y-2 text-[15px] text-slate-700">
+          <Row icon={<IconCalendar size={18} />}>{fmtDate(b.preferred_date)}</Row>
+          <Row icon={<IconClock size={18} />}>{slotLabel(b.preferred_slot)}</Row>
         </div>
-        {b.notes && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Customer note: {b.notes}</p>}
-      </Card>
+        <div className="mt-4 flex items-center justify-between rounded-xl bg-brand-50 px-3.5 py-3">
+          <span className="text-sm font-bold text-brand-900">You earn</span>
+          <span className="text-xl font-extrabold text-brand-900">{inr(b.pro_payout)}</span>
+        </div>
+      </section>
 
-      <Card title="Customer">
-        {contactVisible ? (
-          <>
-            <InfoList
-              items={[
-                ["Name", b.customer_name],
-                ["Address", fullAddress],
-              ]}
-            />
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <a href={`tel:+91${b.customer_phone}`} className="btn btn-secondary">
-                Call customer
-              </a>
-              <a href={mapsSearchUrl(fullAddress)} target="_blank" rel="noreferrer" className="btn btn-secondary">
-                Open in Maps
-              </a>
-            </div>
-          </>
-        ) : (
-          <>
-            <InfoList
-              items={[
-                ["Name", b.customer_name],
-                ["Area", `${b.city} ${b.pincode}`],
-              ]}
-            />
-            <p className="mt-2 text-xs text-slate-500">Phone number and full address are shown after you accept.</p>
-          </>
-        )}
-      </Card>
-
-      {b.status === "assigned" && (
-        <Card title="Can you do this job?">
-          <ActionForm action={acceptJob}>
-            <input type="hidden" name="booking_id" value={b.id} />
-            <SubmitButton className="w-full py-3 text-base" pendingText="Accepting…">
-              Accept job
-            </SubmitButton>
-          </ActionForm>
-          <DeclineForm bookingId={b.id} />
-        </Card>
+      {b.notes && (
+        <section className="card flex gap-3 border-amber-200 bg-amber-50 text-amber-900">
+          <IconNote size={20} className="mt-0.5 shrink-0" />
+          <p className="text-[15px]">
+            <span className="font-bold">Customer note: </span>
+            {b.notes}
+          </p>
+        </section>
       )}
 
+      <section className="card">
+        <p className="section-title mb-2">Customer</p>
+        <p className="text-[17px] font-extrabold text-slate-900">{b.customer_name}</p>
+        <div className="mt-1.5 text-[15px] text-slate-600">
+          <Row icon={<IconMapPin size={18} />}>{contactVisible ? fullAddress : `${b.city} ${b.pincode}`}</Row>
+        </div>
+        {contactVisible ? (
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            <a href={`tel:+91${b.customer_phone}`} className="btn btn-secondary btn-lg">
+              <IconPhone size={18} /> Call
+            </a>
+            <a href={mapsSearchUrl(fullAddress)} target="_blank" rel="noreferrer" className="btn btn-secondary btn-lg">
+              <IconNavigation size={18} /> Directions
+            </a>
+          </div>
+        ) : (
+          <p className="mt-3 flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-sm text-slate-600">
+            <IconInfo size={18} className="shrink-0 text-slate-400" />
+            Phone number and full address are shown after you accept.
+          </p>
+        )}
+      </section>
+
+      {b.status === "assigned" && <AcceptDeclineBar bookingId={b.id} />}
+
       {b.status === "accepted" && (
-        <Card title="Visit">
-          <CheckInButton bookingId={b.id} />
-          <DeclineForm bookingId={b.id} label="Can't make it? Release this job" />
-        </Card>
+        <>
+          <Card title="Visit">
+            <p className="text-[15px] text-slate-600">When you reach the customer&apos;s home, tap <b>Check in</b> below. Then add photos and finish the job.</p>
+            <div className="mt-2">
+              <ReleaseJobButton bookingId={b.id} />
+            </div>
+          </Card>
+          <CheckInBar bookingId={b.id} />
+        </>
       )}
 
       {b.status === "in_progress" && (
         <>
-          <Card title="Photos" action={<span className="text-xs text-slate-500">Checked in {fmtDateTime(b.checkin_at)}</span>}>
-            <p className="mb-3 text-sm text-slate-600">Take photos of the products and fittings before and after your work. Please don&apos;t photograph children.</p>
+          <Card title="Photos" action={<span className="text-xs font-semibold text-slate-500">Checked in {fmtDateTime(b.checkin_at)}</span>}>
+            <p className="mb-3 text-sm text-slate-600">Photograph the products and fittings before and after your work. Please don&apos;t photograph children.</p>
             <PhotoUploader bookingId={b.id} />
             <div className="mt-4">
               <JobPhotos photos={photos} canDelete />
@@ -115,15 +105,28 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
 
       {b.status === "completed" && (
         <Card title="Completed">
-          <InfoList
-            items={[
-              ["Checked in", fmtDateTime(b.checkin_at)],
-              ["Completed", fmtDateTime(b.completed_at)],
-              ["Payout", <span key="p">{inr(b.pro_payout)} <Badge tone={b.payout_status === "paid" ? "green" : "amber"}>{b.payout_status === "paid" ? "Paid" : "Pending"}</Badge></span>],
-              ["Rating", b.rating ? "★".repeat(b.rating) : "Not rated yet"],
-              ["Your notes", b.pro_notes],
-            ]}
-          />
+          <dl className="divide-y divide-slate-100 text-[15px]">
+            <Line label="Checked in">{fmtDateTime(b.checkin_at)}</Line>
+            <Line label="Completed">{fmtDateTime(b.completed_at)}</Line>
+            <Line label="Payout">
+              <span className="flex items-center gap-2">
+                {inr(b.pro_payout)}
+                <Badge tone={b.payout_status === "paid" ? "green" : "amber"}>{b.payout_status === "paid" ? "Paid" : "Pending"}</Badge>
+              </span>
+            </Line>
+            <Line label="Rating">
+              {b.rating ? (
+                <span className="flex items-center gap-0.5 text-amber-400" aria-label={`${b.rating} out of 5`}>
+                  {Array.from({ length: b.rating }, (_, i) => (
+                    <IconStar key={i} size={18} />
+                  ))}
+                </span>
+              ) : (
+                "Not rated yet"
+              )}
+            </Line>
+          </dl>
+          {b.pro_notes && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm whitespace-pre-wrap text-slate-700">{b.pro_notes}</p>}
           <div className="mt-4">
             <JobPhotos photos={photos} canDelete={false} />
           </div>
@@ -133,17 +136,20 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
   );
 }
 
-function DeclineForm({ bookingId, label = "Decline this job" }: { bookingId: number; label?: string }) {
+function Row({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <details className="mt-4 rounded-xl border border-slate-200 p-3">
-      <summary className="cursor-pointer text-sm font-bold text-slate-600">{label}</summary>
-      <ActionForm action={rejectJob} className="mt-3 space-y-3">
-        <input type="hidden" name="booking_id" value={bookingId} />
-        <input name="reason" required placeholder="Reason (e.g. too far, not available that day)" className="input" />
-        <SubmitButton variant="danger" pendingText="Sending…" confirm="Give this job back? It will be offered to another Safe Pro.">
-          Give job back
-        </SubmitButton>
-      </ActionForm>
-    </details>
+    <p className="flex items-start gap-2.5">
+      <span className="mt-0.5 shrink-0 text-slate-400">{icon}</span>
+      <span className="min-w-0">{children}</span>
+    </p>
+  );
+}
+
+function Line({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-center justify-between gap-4 py-2.5">
+      <dt className="text-slate-500">{label}</dt>
+      <dd className="text-right font-semibold text-slate-900">{children}</dd>
+    </div>
   );
 }
