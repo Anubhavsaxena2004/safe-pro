@@ -56,10 +56,24 @@ Codes expire after 10 minutes, allow 5 wrong tries, can be resent after 30 secon
    - `AUTH_SECRET`: a random string of 32+ characters. Generate one with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
    - `ADMIN_EMAIL` and `ADMIN_PASSWORD`: the first admin login.
    - `BLOB_ACCESS=public` only if you created a public Blob store (the default is private).
-5. **Redeploy.** Every build runs `scripts/migrate.mjs` first, which creates or updates the tables (safe to run repeatedly).
-6. Open `https://<your-app>.vercel.app/admin` and log in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. After that first login the account is stored in the database. Change the password and add teammates under **Settings**.
-7. In **Settings → Functions**, set the **Function Region** to the region your database is in (for example Mumbai `bom1` / Singapore `sin1`), so pages load quickly.
-8. Optional: add a domain, e.g. `book.kiddough.in`, plus `pros.kiddough.in` pointing to the same project for agents.
+5. **Redeploy** (Deployments → ⋯ → Redeploy). Environment variables only take effect on a new deployment, and every build runs `scripts/migrate.mjs` first, which creates or updates the tables (safe to run repeatedly).
+6. **Open `https://<your-app>.vercel.app/api/health`.** It must show `"ok": true`. If not, it says exactly what is missing (no secret values are shown).
+7. Open `https://<your-app>.vercel.app/admin` and log in with `ADMIN_EMAIL` / `ADMIN_PASSWORD`. After that first login the account is stored in the database. Change the password and add teammates under **Settings**.
+8. In **Settings → Functions**, set the **Function Region** to the region your database is in (for example Mumbai `bom1` / Singapore `sin1`), so pages load quickly.
+9. Optional: add a domain, e.g. `book.kiddough.in`, plus `pros.kiddough.in` pointing to the same project for agents.
+
+### Troubleshooting
+
+"Something went wrong", "We couldn't send the code", or a 500 error almost always means setup is incomplete. Open `/api/health`:
+
+| It says | Fix |
+|---|---|
+| `auth_secret: missing` | Add `AUTH_SECRET` (32+ random characters) to Environment Variables for **Production**, then redeploy |
+| `database: missing` | Connect a database under Storage (Neon), or add `DATABASE_URL`, then redeploy |
+| `tables are missing` | Redeploy; the build creates the tables. Or run `npm run db:migrate` locally against the same `DATABASE_URL` |
+| `cannot connect: …` | Check the `DATABASE_URL` value (use the pooled connection string) |
+
+Neon / Supabase connection strings work as pasted: settings such as `channel_binding` and `supa` are removed automatically.
 
 > Vercel's free Hobby plan is for non-commercial use. For a live business, use the Pro plan.
 

@@ -14,6 +14,12 @@ import {
 
 type Step = "enter" | "sent" | "verified";
 
+/** Only blame the connection when the device really is offline; otherwise it's a server problem. */
+function failureMessage(action: string) {
+  if (typeof navigator !== "undefined" && !navigator.onLine) return "You're offline. Check your internet connection and try again.";
+  return `We couldn't ${action} right now. Please try again in a minute.`;
+}
+
 interface FlowProps<P extends string> {
   purpose: P;
   label: string;
@@ -55,7 +61,7 @@ function OtpFlow<P extends string>(props: FlowProps<P>) {
   const send = () =>
     start(async () => {
       setError(null);
-      const r = await props.send(props.purpose, value).catch(() => ({ error: "Couldn't send the code. Check your connection." }) as OtpSendResult);
+      const r = await props.send(props.purpose, value).catch((): OtpSendResult => ({ error: failureMessage("send the code") }));
       if (r.error) return setError(r.error);
       setDemoCode(r.demoCode ?? null);
       setSentTo(r.sentTo ?? "");
@@ -69,7 +75,7 @@ function OtpFlow<P extends string>(props: FlowProps<P>) {
       setError(null);
       const r = await props
         .verify(props.purpose, value, code)
-        .catch((): OtpVerifyResult => ({ error: "Couldn't verify the code. Check your connection." }));
+        .catch((): OtpVerifyResult => ({ error: failureMessage("check the code") }));
       if (r?.error) return setError(r.error);
       if (r?.token) {
         setToken(r.token);
