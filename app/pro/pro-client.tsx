@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, useTransition, type ReactNode } from "reac
 import { FormMessage } from "@/components/forms";
 import { IconBriefcase, IconCamera, IconChevronLeft, IconUser, IconWallet, IconX } from "@/components/icons";
 import { Logo } from "@/components/site-header";
+import { failureMessage } from "@/lib/client/errors";
 import { getPosition, hasLocationPermission } from "@/lib/client/geo";
 import { compressImage } from "@/lib/client/image";
 import type { FormState } from "@/lib/types";
@@ -166,7 +167,7 @@ export function AcceptDeclineBar({ bookingId }: { bookingId: number }) {
             start(async () => {
               const fd = new FormData();
               fd.set("booking_id", String(bookingId));
-              setState(await acceptJob(undefined, fd).catch(() => ({ error: "Couldn't accept. Check your connection." })));
+              setState(await acceptJob(undefined, fd).catch(() => ({ error: failureMessage("accept the job") })));
             })
           }
         >
@@ -234,7 +235,7 @@ function DeclineSheet({ bookingId, open, onClose, title }: { bookingId: number; 
             const fd = new FormData();
             fd.set("booking_id", String(bookingId));
             fd.set("reason", needsDetails ? details.trim() : details.trim() ? `${reason}: ${details.trim()}` : reason);
-            start(async () => setState(await rejectJob(undefined, fd).catch(() => ({ error: "Couldn't send. Check your connection." }))));
+            start(async () => setState(await rejectJob(undefined, fd).catch(() => ({ error: failureMessage("send this") }))));
           }}
         >
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Reason">
@@ -279,7 +280,7 @@ export function CheckInBar({ bookingId }: { bookingId: number }) {
           onClick={() =>
             start(async () => {
               const pos = await getPosition();
-              setState(await checkIn(bookingId, pos?.lat ?? null, pos?.lng ?? null).catch(() => ({ error: "Couldn't check in. Try again." })));
+              setState(await checkIn(bookingId, pos?.lat ?? null, pos?.lng ?? null).catch(() => ({ error: failureMessage("check you in") })));
             })
           }
         >
@@ -322,7 +323,7 @@ export function PhotoUploader({ bookingId }: { bookingId: number }) {
               fd.set("booking_id", String(bookingId));
               fd.set("kind", kind);
               fd.set("photo", await compressImage(file));
-              const result = await uploadJobPhoto(fd).catch(() => ({ error: "Upload failed. Check your connection and try again." }));
+              const result = await uploadJobPhoto(fd).catch(() => ({ error: failureMessage("upload the photo") }));
               if (result?.error) return setState(result);
             }
             setState({ message: files.length > 1 ? `${files.length} photos added.` : "Photo added." });
@@ -404,7 +405,7 @@ export function CompleteJobForm({ bookingId }: { bookingId: number }) {
             fd.set("lat", String(pos.lat));
             fd.set("lng", String(pos.lng));
           }
-          setState(await completeJob(fd).catch(() => ({ error: "Something went wrong. Please try again." })));
+          setState(await completeJob(fd).catch(() => ({ error: failureMessage("complete the job") })));
         });
       }}
     >
