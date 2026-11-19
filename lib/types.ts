@@ -29,6 +29,7 @@ export interface Pro {
 
 export interface Service {
   id: number;
+  code: string | null;
   name: string;
   description: string;
   price: number;
@@ -52,6 +53,11 @@ export interface Booking {
   customer_phone: string;
   customer_email: string;
   phone_verified: boolean;
+  product_title: string;
+  product_variant: string;
+  product_sku: string;
+  product_url: string;
+  shopify_order: string;
   address: string;
   city: string;
   pincode: string;

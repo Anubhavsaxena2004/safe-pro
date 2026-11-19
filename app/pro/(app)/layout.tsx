@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BottomNav, LocationPing } from "@/app/pro/pro-client";
-import { Logo } from "@/components/site-header";
+import { Logo } from "@/components/logo";
 import { requirePro } from "@/lib/auth";
 import { cn, firstName } from "@/lib/utils";
 

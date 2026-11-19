@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { logoutAdmin } from "@/app/admin/actions";
 import { AdminNav } from "@/app/admin/admin-nav";
-import { Logo } from "@/components/site-header";
+import { Logo } from "@/components/logo";
 import { requireAdmin } from "@/lib/auth";
 import { sql } from "@/lib/db";
 

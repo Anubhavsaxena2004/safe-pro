@@ -10,8 +10,8 @@ import { normalizePhone } from "@/lib/utils";
 export type OtpSendResult = { error?: string; demoCode?: string; sentTo?: string };
 export type OtpVerifyResult = { error?: string; token?: string; label?: string } | undefined;
 
-type PhonePurpose = "pro_login" | "pro_register" | "booking";
-const PHONE_PURPOSES: PhonePurpose[] = ["pro_login", "pro_register", "booking"];
+type PhonePurpose = "pro_login" | "pro_register";
+const PHONE_PURPOSES: PhonePurpose[] = ["pro_login", "pro_register"];
 
 function cleanCode(code: unknown) {
   return String(code ?? "").replace(/\D/g, "").slice(0, 6);
@@ -24,11 +24,9 @@ export async function sendPhoneOtp(purpose: PhonePurpose, rawPhone: string): Pro
   const phone = normalizePhone(String(rawPhone ?? ""));
   if (!phone) return { error: "Enter a valid 10-digit mobile number." };
 
-  if (purpose !== "booking") {
-    const [existing] = await sql`select 1 from pros where phone = ${phone}`;
-    if (purpose === "pro_login" && !existing) return { error: "No Safe Pro account uses this number. Please register first." };
-    if (purpose === "pro_register" && existing) return { error: "This number is already registered. Please log in instead." };
-  }
+  const [existing] = await sql`select 1 from pros where phone = ${phone}`;
+  if (purpose === "pro_login" && !existing) return { error: "No Safe Pro account uses this number. Please register first." };
+  if (purpose === "pro_register" && existing) return { error: "This number is already registered. Please log in instead." };
 
   const demo = isDemoOtp();
   const result = await issueOtp(purpose, phone, demo, (code) => sendOtpSms(phone, code));

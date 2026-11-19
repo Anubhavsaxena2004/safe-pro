@@ -128,13 +128,36 @@ alter table pros add column if not exists aadhaar_verified_at timestamptz;
 alter table pros add column if not exists kyc_mode text not null default '';         -- demo | live
 alter table bookings add column if not exists phone_verified boolean not null default false;
 
+-- Requests now arrive from the Kiddough Shopify store.
+-- services.code is the key the store sends (e.g. ?service=installation).
+alter table services add column if not exists code text;
+create unique index if not exists services_code_idx on services (code) where code is not null;
+update services set code = 'safety_check' where code is null and name = 'Home Safety Check';
+update services set code = 'installation' where code is null and name = 'Baby-Proofing Installation';
+update services set code = 'servicing'    where code is null and name = 'Servicing & Repair';
+
+-- Which product the job is about, as sent by the store (read-only copy, never written back).
+alter table bookings add column if not exists product_title   text not null default '';
+alter table bookings add column if not exists product_variant text not null default '';
+alter table bookings add column if not exists product_sku     text not null default '';
+alter table bookings add column if not exists product_url     text not null default '';
+alter table bookings add column if not exists shopify_order   text not null default '';
+
+-- Rate limiting for the public request endpoint (IP stored only as a keyed hash).
+create table if not exists intake_log (
+  id         serial primary key,
+  ip_hash    text not null,
+  created_at timestamptz not null default now()
+);
+create index if not exists intake_log_ip_idx on intake_log (ip_hash, created_at desc);
+
 -- Starter data: only inserted when the table is empty. Edit prices in Admin → Settings.
-insert into services (name, description, price, pro_payout, sort_order)
+insert into services (code, name, description, price, pro_payout, sort_order)
 select * from (values
-  ('Home Safety Check', 'A Safe Pro visits, checks every room for child-safety risks and recommends products.', 499, 250, 1),
-  ('Baby-Proofing Installation', 'Installation of safety gates, bed rails, corner guards, cabinet locks and more.', 999, 500, 2),
-  ('Servicing & Repair', 'Check-up, adjustment or repair of safety products that are already installed.', 399, 200, 3)
-) as v (name, description, price, pro_payout, sort_order)
+  ('safety_check', 'Home Safety Check', 'A Safe Pro visits, checks every room for child-safety risks and recommends products.', 499, 250, 1),
+  ('installation', 'Baby-Proofing Installation', 'Installation of safety gates, bed rails, corner guards, cabinet locks and more.', 999, 500, 2),
+  ('servicing', 'Servicing & Repair', 'Check-up, adjustment or repair of safety products that are already installed.', 399, 200, 3)
+) as v (code, name, description, price, pro_payout, sort_order)
 where not exists (select 1 from services);
 
 insert into cities (name)

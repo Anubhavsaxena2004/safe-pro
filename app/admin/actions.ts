@@ -52,7 +52,7 @@ export async function logoutAdmin() {
 
 export async function createBookingAdmin(_prev: FormState, fd: FormData): Promise<FormState> {
   const admin = await requireAdmin();
-  const parsed = await parseBookingForm(fd, { requireConsent: true, requirePhoneOtp: false });
+  const parsed = await parseBookingForm(fd, { requireConsent: true });
   if (!parsed.ok) return { error: parsed.error };
   const { id } = await insertBooking(parsed.data, "admin", admin.name);
   refresh();
@@ -173,21 +173,27 @@ export async function saveService(_prev: FormState, fd: FormData): Promise<FormS
   const payout = int(fd, "pro_payout");
   const sortOrder = int(fd, "sort_order") || 0;
   const active = fd.get("active") === "on";
+  const code = str(fd, "code", 40).toLowerCase() || null;
   if (name.length < 2) return { error: "Enter a service name." };
   if (!(price >= 0) || !(payout >= 0)) return { error: "Price and payout must be 0 or more." };
+  if (code && !/^[a-z0-9_-]{2,40}$/.test(code)) return { error: "Website code: use lowercase letters, numbers, - or _ (e.g. installation)." };
 
-  if (Number.isInteger(id) && id > 0) {
-    await sql`
-      update services set name = ${name}, description = ${description}, price = ${price}, pro_payout = ${payout},
-        sort_order = ${sortOrder}, active = ${active}
-      where id = ${id}`;
-  } else {
-    await sql`
-      insert into services (name, description, price, pro_payout, sort_order, active)
-      values (${name}, ${description}, ${price}, ${payout}, ${sortOrder}, true)`;
+  try {
+    if (Number.isInteger(id) && id > 0) {
+      await sql`
+        update services set name = ${name}, code = ${code}, description = ${description}, price = ${price}, pro_payout = ${payout},
+          sort_order = ${sortOrder}, active = ${active}
+        where id = ${id}`;
+    } else {
+      await sql`
+        insert into services (name, code, description, price, pro_payout, sort_order, active)
+        values (${name}, ${code}, ${description}, ${price}, ${payout}, ${sortOrder}, true)`;
+    }
+  } catch (err) {
+    if ((err as { code?: string }).code === "23505") return { error: `Another service already uses the website code "${code}".` };
+    throw err;
   }
   refresh();
-  revalidatePath("/book");
   return { message: "Saved." };
 }
 

@@ -1,0 +1,236 @@
+{%- comment -%}
+  Kiddough Home Care booking form, for the Kiddough Shopify store.
+
+  HOW TO ADD (no theme code is edited):
+    1. Online Store → Pages → Add page. Title "Home Care" (the URL becomes /pages/home-care). Save.
+    2. Online Store → Themes → Customize (do this on a COPY of the live theme first).
+       Open the "Home Care" page, Add section → "Custom Liquid", paste this whole file, Save.
+    3. Test it in the theme preview, then publish.
+
+  The form sends each request to the Safe Pro app. It never changes anything in the store.
+  If the app moves to a new address, change KD_API below.
+{%- endcomment -%}
+
+<div id="kd-home-care" class="kd-hc">
+  <p class="kd-hc__muted">Loading booking form…</p>
+</div>
+
+<!-- kd:prefill-start -->
+<script>
+  window.KD_PREFILL = {
+    name: {{ customer.name | default: '' | json }},
+    email: {{ customer.email | default: '' | json }},
+    phone: {{ customer.phone | default: customer.default_address.phone | default: '' | json }},
+    address: {{ customer.default_address.address1 | append: ' ' | append: customer.default_address.address2 | strip | json }},
+    city: {{ customer.default_address.city | default: '' | json }},
+    pincode: {{ customer.default_address.zip | default: '' | json }}
+  };
+</script>
+<!-- kd:prefill-end -->
+
+<style>
+  .kd-hc { --kd: #0f766e; --kd-dark: #115e59; --kd-soft: #f0fdfa; --kd-line: #d6dde5; max-width: 640px; margin: 0 auto; padding: 8px 0 32px; font: inherit; color: inherit; }
+  .kd-hc * { box-sizing: border-box; }
+  .kd-hc h2 { margin: 0 0 4px; font-size: 1.5em; line-height: 1.2; }
+  .kd-hc__muted { color: #64748b; font-size: 0.95em; margin: 0 0 16px; }
+  .kd-hc__product { border: 1px solid var(--kd-line); border-radius: 12px; padding: 12px 14px; margin: 0 0 18px; background: #fff; }
+  .kd-hc__product b { display: block; }
+  .kd-hc fieldset { border: 0; padding: 0; margin: 0 0 18px; }
+  .kd-hc legend, .kd-hc label.kd-hc__label { display: block; font-weight: 700; margin: 0 0 6px; font-size: 0.95em; }
+  .kd-hc__option { display: flex; gap: 10px; align-items: flex-start; border: 1px solid var(--kd-line); border-radius: 12px; padding: 12px 14px; margin: 0 0 8px; cursor: pointer; background: #fff; }
+  .kd-hc__option:has(input:checked) { border-color: var(--kd); background: var(--kd-soft); }
+  .kd-hc__option input { margin-top: 3px; accent-color: var(--kd); }
+  .kd-hc__option small { display: block; color: #64748b; margin-top: 2px; }
+  .kd-hc__price { margin-left: auto; font-weight: 700; color: var(--kd-dark); white-space: nowrap; }
+  .kd-hc__grid { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 0 0 18px; }
+  @media (min-width: 600px) { .kd-hc__grid { grid-template-columns: 1fr 1fr; } .kd-hc__full { grid-column: 1 / -1; } }
+  .kd-hc input[type="text"], .kd-hc input[type="tel"], .kd-hc input[type="email"], .kd-hc input[type="date"], .kd-hc select, .kd-hc textarea {
+    width: 100%; font: inherit; font-size: 16px; padding: 11px 12px; border: 1px solid var(--kd-line); border-radius: 10px; background: #fff; color: inherit; }
+  .kd-hc input:focus, .kd-hc select:focus, .kd-hc textarea:focus { outline: 2px solid var(--kd); outline-offset: 1px; border-color: var(--kd); }
+  .kd-hc__slots { display: grid; gap: 8px; grid-template-columns: 1fr; }
+  @media (min-width: 600px) { .kd-hc__slots { grid-template-columns: repeat(3, 1fr); } }
+  .kd-hc__consent { display: flex; gap: 10px; align-items: flex-start; font-size: 0.92em; margin: 0 0 18px; }
+  .kd-hc__consent input { margin-top: 3px; accent-color: var(--kd); }
+  .kd-hc__btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 14px 18px; font: inherit; font-weight: 700; font-size: 1.05em; color: #fff; background: var(--kd); cursor: pointer; }
+  .kd-hc__btn:hover { background: var(--kd-dark); }
+  .kd-hc__btn[disabled] { opacity: 0.6; cursor: wait; }
+  .kd-hc__error { background: #fef2f2; color: #b91c1c; border-radius: 10px; padding: 10px 12px; font-weight: 600; margin: 12px 0 0; }
+  .kd-hc__done { border: 1px solid #a7f3d0; background: #ecfdf5; border-radius: 16px; padding: 20px; }
+  .kd-hc__done dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 14px 0; }
+  .kd-hc__done dt { color: #64748b; }
+  .kd-hc__done dd { margin: 0; font-weight: 700; }
+  .kd-hc__code { border: 2px dashed #fb923c; background: #fff7ed; border-radius: 12px; padding: 14px; margin: 14px 0 0; }
+  .kd-hc__code strong { display: block; font-size: 2em; letter-spacing: 0.3em; margin: 4px 0; }
+  .kd-hc__hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+</style>
+
+<script>
+  (function () {
+    var KD_API = "https://safe-pro-gamma.vercel.app";
+
+    var root = document.getElementById("kd-home-care");
+    var params = new URLSearchParams(window.location.search);
+    var pre = window.KD_PREFILL || {};
+    var product = {
+      title: params.get("product") || "",
+      variant: params.get("variant") || "",
+      sku: params.get("sku") || "",
+      url: params.get("product_url") || "",
+    };
+    if (product.variant === "Default Title") product.variant = "";
+
+    function esc(value) {
+      return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+        return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+      });
+    }
+    function inr(n) {
+      return n > 0 ? "₹" + Number(n).toLocaleString("en-IN") : "Free";
+    }
+    function addDays(iso, days) {
+      var d = new Date(iso + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + days);
+      return d.toISOString().slice(0, 10);
+    }
+    function niceDate(iso) {
+      return new Date(iso + "T00:00:00Z").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" });
+    }
+    function unavailable() {
+      root.innerHTML = '<p class="kd-hc__error">Online booking is not available right now. Please call or WhatsApp us and we\'ll book your visit.</p>';
+    }
+
+    fetch(KD_API + "/api/options")
+      .then(function (r) {
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        return r.json();
+      })
+      .then(render)
+      .catch(unavailable);
+
+    function render(opt) {
+      if (!opt.services || !opt.services.length || !opt.cities || !opt.cities.length) return unavailable();
+
+      var wanted = (params.get("service") || "").toLowerCase();
+      var codes = opt.services.map(function (s) { return s.code; });
+      var selected = codes.indexOf(wanted) >= 0 ? wanted : product.title && codes.indexOf("installation") >= 0 ? "installation" : codes[0];
+      var preCity = opt.cities.filter(function (c) { return c.toLowerCase() === String(pre.city || "").toLowerCase(); })[0] || "";
+      var defaultDate = addDays(opt.min_date, 1) <= opt.max_date ? addDays(opt.min_date, 1) : opt.min_date;
+
+      root.innerHTML =
+        "<h2>Book a home visit</h2>" +
+        '<p class="kd-hc__muted">A verified Kiddough Safe Pro will visit at your chosen time. Our team will call you to confirm.</p>' +
+        (product.title
+          ? '<div class="kd-hc__product"><span class="kd-hc__muted">For your product</span><b>' + esc(product.title) + "</b>" +
+            (product.variant ? '<span class="kd-hc__muted">' + esc(product.variant) + "</span>" : "") + "</div>"
+          : "") +
+        '<form novalidate>' +
+        "<fieldset><legend>Service</legend>" +
+        opt.services
+          .map(function (s) {
+            return (
+              '<label class="kd-hc__option"><input type="radio" name="service" value="' + esc(s.code) + '"' + (s.code === selected ? " checked" : "") + ">" +
+              "<span><b>" + esc(s.name) + "</b>" + (s.description ? "<small>" + esc(s.description) + "</small>" : "") + "</span>" +
+              '<span class="kd-hc__price">' + inr(s.price) + "</span></label>"
+            );
+          })
+          .join("") +
+        "</fieldset>" +
+        '<div class="kd-hc__grid">' +
+        field("Name", '<input type="text" name="customer_name" autocomplete="name" required value="' + esc(pre.name) + '">') +
+        field("Mobile number", '<input type="tel" name="customer_phone" autocomplete="tel" inputmode="tel" placeholder="10-digit mobile" required value="' + esc(pre.phone) + '">') +
+        field("Email (optional)", '<input type="email" name="customer_email" autocomplete="email" value="' + esc(pre.email) + '">') +
+        field(
+          "City",
+          '<select name="city" required><option value="">Choose city</option>' +
+            opt.cities.map(function (c) { return '<option value="' + esc(c) + '"' + (c === preCity ? " selected" : "") + ">" + esc(c) + "</option>"; }).join("") +
+            "</select>",
+        ) +
+        field("Full address", '<textarea name="address" rows="3" autocomplete="street-address" placeholder="Flat / house no., building, street, landmark" required>' + esc(pre.address) + "</textarea>", true) +
+        field("Pincode", '<input type="text" name="pincode" inputmode="numeric" maxlength="6" autocomplete="postal-code" required value="' + esc(pre.pincode) + '">') +
+        field("Preferred date", '<input type="date" name="preferred_date" required min="' + opt.min_date + '" max="' + opt.max_date + '" value="' + defaultDate + '">') +
+        field("Order number (optional)", '<input type="text" name="shopify_order" placeholder="e.g. #1042">') +
+        "</div>" +
+        '<fieldset><legend>Time slot</legend><div class="kd-hc__slots">' +
+        opt.slots
+          .map(function (s, i) {
+            return '<label class="kd-hc__option"><input type="radio" name="preferred_slot" value="' + esc(s.value) + '"' + (i === 0 ? " checked" : "") + "><span>" + esc(s.label) + "</span></label>";
+          })
+          .join("") +
+        "</div></fieldset>" +
+        '<div class="kd-hc__grid">' + field("Anything we should know? (optional)", '<textarea name="notes" rows="2" placeholder="e.g. child\'s age, floor number, parking"></textarea>', true) + "</div>" +
+        '<div class="kd-hc__hp" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>' +
+        '<label class="kd-hc__consent"><input type="checkbox" name="consent" required><span>I agree to a Kiddough Safe Pro visiting my home, and to photos of the installed products (not of my children) being taken for the service report.</span></label>' +
+        '<button type="submit" class="kd-hc__btn">Request visit</button>' +
+        '<p class="kd-hc__error" role="alert" hidden></p>' +
+        "</form>";
+
+      var form = root.querySelector("form");
+      var button = form.querySelector("button");
+      var error = form.querySelector('[role="alert"]');
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var data = new FormData(form);
+        var body = {
+          service: data.get("service"),
+          customer_name: data.get("customer_name"),
+          customer_phone: data.get("customer_phone"),
+          customer_email: data.get("customer_email"),
+          city: data.get("city"),
+          address: data.get("address"),
+          pincode: data.get("pincode"),
+          preferred_date: data.get("preferred_date"),
+          preferred_slot: data.get("preferred_slot"),
+          notes: data.get("notes"),
+          shopify_order: data.get("shopify_order"),
+          consent: data.get("consent") === "on",
+          website: data.get("website"),
+          product_title: product.title,
+          product_variant: product.variant,
+          product_sku: product.sku,
+          product_url: product.url,
+        };
+        error.hidden = true;
+        button.disabled = true;
+        button.textContent = "Sending…";
+        fetch(KD_API + "/api/requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })
+          .then(function (r) {
+            return r.json().catch(function () { return { ok: false }; });
+          })
+          .then(function (res) {
+            if (res && res.ok) return done(res, body);
+            error.textContent = (res && res.error) || "Something went wrong. Please try again, or call us.";
+            error.hidden = false;
+          })
+          .catch(function () {
+            error.textContent = navigator.onLine === false ? "You're offline. Check your internet connection and try again." : "We couldn't send your request. Please try again, or call us.";
+            error.hidden = false;
+          })
+          .finally(function () {
+            button.disabled = false;
+            button.textContent = "Request visit";
+          });
+      });
+    }
+
+    function field(label, control, full) {
+      return '<div' + (full ? ' class="kd-hc__full"' : "") + '><label class="kd-hc__label">' + esc(label) + "</label>" + control + "</div>";
+    }
+
+    function done(res, body) {
+      root.innerHTML =
+        '<div class="kd-hc__done" role="status">' +
+        "<h2>Request received ✓</h2>" +
+        '<p class="kd-hc__muted">Our team will call you on ' + esc(body.customer_phone) + " to confirm your visit.</p>" +
+        "<dl>" +
+        "<dt>Booking ID</dt><dd data-kd-ref>" + esc(res.ref) + "</dd>" +
+        "<dt>Service</dt><dd>" + esc(res.service) + (body.product_title ? " · " + esc(body.product_title) : "") + "</dd>" +
+        "<dt>Visit</dt><dd>" + esc(niceDate(res.preferred_date)) + ", " + esc(res.preferred_slot) + "</dd>" +
+        "</dl>" +
+        '<div class="kd-hc__code">Your completion code<strong data-kd-code>' + esc(res.completion_code) + "</strong>" +
+        "Share this code with your Safe Pro only after the work is finished. Please take a screenshot of this page.</div>" +
+        "</div>";
+      root.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  })();
+</script>

@@ -209,7 +209,7 @@ export function PhoneOtp({
   label = "Mobile number",
   verifyLabel = "Verify",
 }: {
-  purpose: "pro_login" | "pro_register" | "booking";
+  purpose: "pro_login" | "pro_register";
   label?: string;
   verifyLabel?: string;
 }) {

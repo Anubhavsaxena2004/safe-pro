@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: { default: "Safe Pro", template: "%s · Safe Pro" },
-  manifest: "/pro.webmanifest",
   appleWebApp: { capable: true, title: "Safe Pro", statusBarStyle: "default" },
 };
 

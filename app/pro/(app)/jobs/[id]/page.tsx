@@ -45,6 +45,18 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
           <span className="text-sm font-bold text-brand-900">You earn</span>
           <span className="text-lg font-extrabold text-brand-900">{inr(b.pro_payout)}</span>
         </div>
+        {b.product_title && (
+          <div className="mt-3 rounded-xl border border-slate-200 p-3 text-sm">
+            <p className="text-xs font-bold tracking-wide text-slate-500 uppercase">Product</p>
+            <p className="font-extrabold text-slate-900">{b.product_title}</p>
+            {(b.product_variant || b.product_sku) && (
+              <p className="text-slate-600">
+                {[b.product_variant, b.product_sku && `SKU ${b.product_sku}`].filter(Boolean).join(" · ")}
+              </p>
+            )}
+            {b.shopify_order && <p className="text-slate-500">Order #{b.shopify_order}</p>}
+          </div>
+        )}
         {b.notes && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-900">Customer note: {b.notes}</p>}
       </Card>
 
@@ -120,7 +132,6 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
               ["Checked in", fmtDateTime(b.checkin_at)],
               ["Completed", fmtDateTime(b.completed_at)],
               ["Payout", <span key="p">{inr(b.pro_payout)} <Badge tone={b.payout_status === "paid" ? "green" : "amber"}>{b.payout_status === "paid" ? "Paid" : "Pending"}</Badge></span>],
-              ["Rating", b.rating ? "★".repeat(b.rating) : "Not rated yet"],
               ["Your notes", b.pro_notes],
             ]}
           />

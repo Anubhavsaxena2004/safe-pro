@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/site-header";
+import { Logo } from "@/components/logo";
 
 export default function ProAuthLayout({ children }: { children: React.ReactNode }) {
   return (
