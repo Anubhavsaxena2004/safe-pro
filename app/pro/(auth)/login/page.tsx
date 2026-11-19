@@ -27,6 +27,12 @@ export default async function ProLoginPage() {
         <Link href="/pro/register" className="btn btn-secondary btn-lg mt-2 w-full">
           Register as a Safe Pro
         </Link>
+        <p className="mt-6 text-xs text-slate-400">
+          Kiddough team?{" "}
+          <Link href="/admin/login" className="inline-flex min-h-11 items-center px-1 font-bold text-slate-500 underline">
+            Admin login
+          </Link>
+        </p>
       </div>
     </>
   );

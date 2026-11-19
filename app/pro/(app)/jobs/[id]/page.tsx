@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { AcceptDeclineBar, CheckInBar, CompleteJobForm, JobPhotos, PhotoUploader, ReleaseJobButton } from "@/app/pro/pro-client";
-import { IconCalendar, IconClock, IconInfo, IconMapPin, IconNavigation, IconNote, IconPhone, IconStar } from "@/components/icons";
+import { IconBox, IconCalendar, IconClock, IconInfo, IconMapPin, IconNavigation, IconNote, IconPhone } from "@/components/icons";
 import { Badge, BookingStatusBadge, Card } from "@/components/ui";
 import { requireApprovedPro } from "@/lib/auth";
 import { getBooking, getPhotos } from "@/lib/bookings";
@@ -39,6 +39,19 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
           <span className="text-sm font-bold text-brand-900">You earn</span>
           <span className="text-xl font-extrabold text-brand-900">{inr(b.pro_payout)}</span>
         </div>
+        {b.product_title && (
+          <div className="mt-3 flex gap-3 rounded-xl border border-slate-200 p-3">
+            <IconBox size={20} className="mt-0.5 shrink-0 text-slate-400" />
+            <div className="min-w-0 text-sm">
+              <p className="section-title">Product</p>
+              <p className="text-[15px] font-extrabold text-slate-900">{b.product_title}</p>
+              {(b.product_variant || b.product_sku) && (
+                <p className="text-slate-600">{[b.product_variant, b.product_sku && `SKU ${b.product_sku}`].filter(Boolean).join(" · ")}</p>
+              )}
+              {b.shopify_order && <p className="text-slate-500">Order #{b.shopify_order}</p>}
+            </div>
+          </div>
+        )}
       </section>
 
       {b.notes && (
@@ -113,17 +126,6 @@ export default async function ProJobPage({ params }: { params: Promise<{ id: str
                 {inr(b.pro_payout)}
                 <Badge tone={b.payout_status === "paid" ? "green" : "amber"}>{b.payout_status === "paid" ? "Paid" : "Pending"}</Badge>
               </span>
-            </Line>
-            <Line label="Rating">
-              {b.rating ? (
-                <span className="flex items-center gap-0.5 text-amber-400" aria-label={`${b.rating} out of 5`}>
-                  {Array.from({ length: b.rating }, (_, i) => (
-                    <IconStar key={i} size={18} />
-                  ))}
-                </span>
-              ) : (
-                "Not rated yet"
-              )}
             </Line>
           </dl>
           {b.pro_notes && <p className="mt-3 rounded-xl bg-slate-50 p-3 text-sm whitespace-pre-wrap text-slate-700">{b.pro_notes}</p>}

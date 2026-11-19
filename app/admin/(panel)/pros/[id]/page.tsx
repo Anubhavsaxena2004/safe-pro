@@ -52,7 +52,7 @@ export default async function AdminProPage({ params }: { params: Promise<{ id: s
         <Stat label="Jobs completed" value={stats.done} />
         <Stat label="Total earned" value={inr(stats.earned)} />
         <Stat label="Unpaid" value={inr(stats.unpaid)} highlight={stats.unpaid > 0} />
-        <Stat label="Rating · declined" value={`${stats.avg_rating ? `★ ${stats.avg_rating}` : "—"} · ${stats.declined}`} />
+        <Stat label="Jobs declined" value={stats.declined} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

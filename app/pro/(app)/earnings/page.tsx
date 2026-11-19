@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { IconChevronRight, IconStar, IconWallet } from "@/components/icons";
+import { IconChevronRight, IconWallet } from "@/components/icons";
 import { Badge } from "@/components/ui";
 import { requirePro } from "@/lib/auth";
 import { sql } from "@/lib/db";
@@ -46,19 +46,7 @@ export default async function EarningsPage() {
       <div className="grid grid-cols-3 gap-2.5">
         <Tile label="Pending" value={inr(totals.unpaid)} highlight={totals.unpaid > 0} />
         <Tile label="Paid" value={inr(totals.paid)} />
-        <Tile
-          label="Rating"
-          value={
-            totals.avg_rating ? (
-              <span className="flex items-center gap-1">
-                <IconStar size={16} className="text-amber-400" />
-                {totals.avg_rating}
-              </span>
-            ) : (
-              "—"
-            )
-          }
-        />
+        <Tile label="Jobs done" value={totals.jobs} />
       </div>
 
       <section>

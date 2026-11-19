@@ -6,9 +6,14 @@ import { ActionForm, SubmitButton } from "@/components/forms";
 import { Badge, BookingStatusBadge, Card, InfoList, PageTitle, PhotoGrid } from "@/components/ui";
 import { getBooking, getEvents, getPhotos } from "@/lib/bookings";
 import { sql } from "@/lib/db";
-import { trackUrl } from "@/lib/track";
 import { fileSrc } from "@/lib/upload";
 import { fmtDate, fmtDateTime, inr, mapsPointUrl, mapsSearchUrl, slotLabel } from "@/lib/utils";
+
+const SOURCE_LABEL: Record<string, string> = {
+  shopify: "from the Kiddough website",
+  admin: "entered by admin",
+  web: "online (old booking page)",
+};
 
 export const metadata: Metadata = { title: "Booking" };
 
@@ -42,12 +47,7 @@ export default async function AdminBookingPage({ params }: { params: Promise<{ i
             {b.ref} <BookingStatusBadge status={b.status} />
           </span>
         }
-        subtitle={`Created ${fmtDateTime(b.created_at)} · ${b.source === "admin" ? "by admin" : "online"}`}
-        action={
-          <a href={trackUrl(b.ref)} target="_blank" rel="noreferrer" className="btn btn-secondary">
-            Customer tracking page ↗
-          </a>
-        }
+        subtitle={`Created ${fmtDateTime(b.created_at)} · ${SOURCE_LABEL[b.source] ?? b.source}`}
       />
 
       <div className="grid gap-4 lg:grid-cols-3">
@@ -58,10 +58,9 @@ export default async function AdminBookingPage({ params }: { params: Promise<{ i
                 ["Name", b.customer_name],
                 [
                   "Phone",
-                  <span key="p" className="flex flex-wrap items-center gap-2">
-                    <a href={`tel:+91${b.customer_phone}`} className="font-bold text-brand-700">{b.customer_phone}</a>
-                    {b.phone_verified ? <Badge tone="green">OTP verified</Badge> : <Badge>Entered by staff</Badge>}
-                  </span>,
+                  <a key="p" href={`tel:+91${b.customer_phone}`} className="font-bold text-brand-700">
+                    {b.customer_phone}
+                  </a>,
                 ],
                 ["Email", b.customer_email],
                 ["Address", <a key="a" href={mapsSearchUrl(fullAddress)} target="_blank" rel="noreferrer" className="hover:underline">{fullAddress}</a>],
@@ -73,10 +72,35 @@ export default async function AdminBookingPage({ params }: { params: Promise<{ i
             <InfoList
               items={[
                 ["Service", b.service_name],
+                [
+                  "Product",
+                  b.product_title ? (
+                    <span key="pr">
+                      {b.product_url ? (
+                        <a href={b.product_url} target="_blank" rel="noreferrer" className="font-bold text-brand-700 hover:underline">
+                          {b.product_title} ↗
+                        </a>
+                      ) : (
+                        b.product_title
+                      )}
+                      {b.product_variant && <span className="text-slate-500"> · {b.product_variant}</span>}
+                      {b.product_sku && <span className="text-slate-500"> · SKU {b.product_sku}</span>}
+                    </span>
+                  ) : (
+                    ""
+                  ),
+                ],
+                ["Shopify order", b.shopify_order ? `#${b.shopify_order}` : ""],
                 ["Visit", `${fmtDate(b.preferred_date)}, ${slotLabel(b.preferred_slot)}`],
                 ["Customer pays", inr(b.price)],
                 ["Safe Pro earns", inr(b.pro_payout)],
-                ["Completion code", <span key="c" className="font-mono font-bold">{b.completion_code}</span>],
+                [
+                  "Completion code",
+                  <span key="c">
+                    <span className="font-mono font-bold">{b.completion_code}</span>
+                    <span className="block text-xs text-slate-500">Shown to the customer on the website after booking. Read it out if they lose it.</span>
+                  </span>,
+                ],
                 ["Customer notes", b.notes],
               ]}
             />
@@ -95,18 +119,6 @@ export default async function AdminBookingPage({ params }: { params: Promise<{ i
             </div>
           </Card>
 
-          {b.status === "completed" && (
-            <Card title="Customer feedback">
-              {b.rating ? (
-                <>
-                  <p className="text-2xl text-amber-400">{"★".repeat(b.rating)}<span className="text-slate-200">{"★".repeat(5 - b.rating)}</span></p>
-                  {b.feedback && <p className="mt-2 text-sm text-slate-700">&ldquo;{b.feedback}&rdquo;</p>}
-                </>
-              ) : (
-                <p className="text-sm text-slate-500">Not rated yet.</p>
-              )}
-            </Card>
-          )}
         </div>
 
         <div className="space-y-4">

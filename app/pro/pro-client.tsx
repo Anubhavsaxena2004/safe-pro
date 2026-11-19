@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import { FormMessage } from "@/components/forms";
 import { IconBriefcase, IconCamera, IconChevronLeft, IconUser, IconWallet, IconX } from "@/components/icons";
-import { Logo } from "@/components/site-header";
+import { Logo } from "@/components/logo";
 import { failureMessage } from "@/lib/client/errors";
 import { getPosition, hasLocationPermission } from "@/lib/client/geo";
 import { compressImage } from "@/lib/client/image";

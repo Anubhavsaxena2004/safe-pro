@@ -1,0 +1,64 @@
+{%- comment -%}
+  Two buttons for a product: "Book installation" and "Book servicing".
+  They open the Home Care page (home-care-page.liquid) with this product filled in.
+
+  HOW TO ADD ON THE PRODUCT PAGE (no theme code is edited):
+    Online Store → Themes → Customize (on a COPY of the live theme first) → Products → Default product
+    → Product information → Add block → "Custom Liquid" → paste this whole file → Save.
+
+  ON PRODUCT CARDS IN COLLECTION GRIDS (needs a small theme code edit):
+    Save this file as snippets/kiddough-home-care-buttons.liquid, then inside snippets/card-product.liquid add:
+      {% render 'kiddough-home-care-buttons', kd_product: card_product %}
+
+  Change kd_page if the Home Care page has a different URL.
+{%- endcomment -%}
+
+{%- assign kd_page = '/pages/home-care' -%}
+{%- assign kd_product = kd_product | default: product -%}
+
+{%- if kd_product -%}
+  {%- assign kd_variant = kd_product.selected_or_first_available_variant -%}
+  {%- assign kd_services = 'installation,servicing' | split: ',' -%}
+  <div class="kd-hc-buttons" data-kd-product="{{ kd_product.id }}">
+    {%- for kd_service in kd_services -%}
+      <a
+        class="kd-hc-buttons__btn{% if forloop.first %} kd-hc-buttons__btn--primary{% endif %}"
+        data-kd-service="{{ kd_service }}"
+        href="{{ kd_page }}?service={{ kd_service }}&product={{ kd_product.title | url_encode }}&variant={{ kd_variant.title | url_encode }}&sku={{ kd_variant.sku | url_encode }}&product_url={{ shop.url | append: kd_product.url | url_encode }}"
+      >
+        {%- if kd_service == 'installation' -%}Book installation{%- else -%}Book servicing{%- endif -%}
+      </a>
+    {%- endfor -%}
+  </div>
+
+  <script>
+    (function () {
+      // Keep the links in sync with the variant the shopper picks (product page only).
+      var box = document.currentScript && document.currentScript.previousElementSibling;
+      if (!box || !box.matches(".kd-hc-buttons")) return;
+      var variants = {{ kd_product.variants | json }};
+      function selectedVariant() {
+        var input = document.querySelector('form[action*="/cart/add"] [name="id"]');
+        var id = input && Number(input.value);
+        return variants.filter(function (v) { return v.id === id; })[0];
+      }
+      box.addEventListener("click", function (e) {
+        var link = e.target.closest("a[data-kd-service]");
+        var v = selectedVariant();
+        if (!link || !v) return;
+        var url = new URL(link.href, window.location.origin);
+        url.searchParams.set("variant", v.title === "Default Title" ? "" : v.title);
+        url.searchParams.set("sku", v.sku || "");
+        link.href = url.toString();
+      });
+    })();
+  </script>
+
+  <style>
+    .kd-hc-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .kd-hc-buttons__btn { flex: 1 1 160px; display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 16px;
+      border: 1px solid #0f766e; border-radius: 10px; color: #0f766e; background: #fff; font-weight: 700; text-decoration: none; text-align: center; }
+    .kd-hc-buttons__btn--primary { background: #0f766e; color: #fff; }
+    .kd-hc-buttons__btn:hover { opacity: 0.9; }
+  </style>
+{%- endif -%}

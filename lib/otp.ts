@@ -3,7 +3,7 @@ import { jwtVerify, SignJWT } from "jose";
 import { sql } from "./db";
 import { appSecret } from "./secret";
 
-export type OtpPurpose = "pro_login" | "pro_register" | "booking" | "aadhaar";
+export type OtpPurpose = "pro_login" | "pro_register" | "aadhaar";
 
 const OTP_TTL_MINUTES = 10;
 export const RESEND_SECONDS = 30;

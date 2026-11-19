@@ -1,8 +1,9 @@
 {
-  "name": "Kiddough Baby Proof",
-  "short_name": "Kiddough",
-  "description": "Book home baby-proofing and child safety services.",
-  "start_url": "/",
+  "id": "/pro",
+  "name": "Kiddough Safe Pro",
+  "short_name": "Safe Pro",
+  "description": "Jobs, check-ins, photos and earnings for Kiddough Safe Pros.",
+  "start_url": "/pro",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f8fafc",

@@ -16,7 +16,7 @@ interface DashboardStats {
   completed_month: number;
   revenue_month: number;
   payouts_due: number;
-  avg_rating: number | null;
+  web_week: number;
 }
 
 interface CityRow {
@@ -44,7 +44,7 @@ export default async function AdminDashboard() {
         (select count(*)::int from bookings, m where status = 'completed' and completed_at >= m.start) as completed_month,
         (select coalesce(sum(price), 0)::int from bookings, m where status = 'completed' and completed_at >= m.start) as revenue_month,
         (select coalesce(sum(pro_payout), 0)::int from bookings where status = 'completed' and payout_status = 'unpaid') as payouts_due,
-        (select round(avg(rating), 1)::float8 from bookings where rating is not null) as avg_rating`,
+        (select count(*)::int from bookings where source = 'shopify' and created_at > now() - interval '7 days') as web_week`,
     sql<CityRow[]>`
       select c.name as city, c.active,
         count(b.id) filter (where b.status in ('requested', 'assigned', 'accepted', 'in_progress'))::int as open,
@@ -73,7 +73,7 @@ export default async function AdminDashboard() {
         <Stat label="Completed this month" value={s.completed_month} href="/admin/bookings?status=completed" />
         <Stat label="Revenue this month" value={inr(s.revenue_month)} />
         <Stat label="Payouts due" value={inr(s.payouts_due)} />
-        <Stat label="Avg. rating" value={s.avg_rating ? `★ ${s.avg_rating}` : "—"} />
+        <Stat label="Website requests (7 days)" value={s.web_week} href="/admin/bookings" />
       </div>
 
       <div className="mt-6 grid gap-6 2xl:grid-cols-3">

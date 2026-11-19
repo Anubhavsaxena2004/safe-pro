@@ -19,20 +19,14 @@ export default async function NewBookingPage() {
       <Link href="/admin/bookings" className="text-sm font-bold text-brand-700">
         ← Bookings
       </Link>
-      <PageTitle title="New booking" subtitle="For customers who call or message to book." />
+      <PageTitle title="New booking" subtitle="For requests that come in by phone or WhatsApp. Website requests arrive automatically." />
       {services.length === 0 || cities.length === 0 ? (
         <EmptyState>
           Add at least one active service and city in <Link href="/admin/settings" className="font-bold text-brand-700">Settings</Link> first.
         </EmptyState>
       ) : (
         <div className="card">
-          <BookingForm
-            action={createBookingAdmin}
-            services={services}
-            cities={cities}
-            submitLabel="Create booking"
-            consentLabel="The customer agreed to the home visit and to photos of the installed products being taken."
-          />
+          <BookingForm action={createBookingAdmin} services={services} cities={cities} />
         </div>
       )}
     </div>

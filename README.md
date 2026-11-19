@@ -1,18 +1,40 @@
-# Kiddough Baby Proof: Service Platform (basic version)
+# Kiddough Safe Pro: field service app (basic version)
 
-One web app with three parts:
+This app is **only for Safe Pros and the Kiddough team**. Customers never visit it: they stay on the official Kiddough Shopify store, where a booking page and two product buttons send their request here.
+
+```
+Kiddough Shopify store (customers)            Safe Pro app (this project, on Vercel)
+  ├─ Product page: [Book installation]          ├─ /api/requests   receives each request
+  │                [Book servicing]  ─────┐      ├─ /admin          Kiddough team assigns a Safe Pro
+  └─ /pages/home-care booking form ───────┴────▶ └─ /pro            Safe Pro does the job
+        (shows booking ID + completion code)      Nothing is ever written back to Shopify.
+```
 
 | Part | URL | Who uses it | Login |
 |---|---|---|---|
-| Customer site | `/`, `/book`, `/track` | Parents booking a visit | Mobile OTP when booking; booking ID + mobile to track |
-| Safe Pro app (installable PWA) | `/pro` | Field agents / installers | Mobile number + OTP |
+| Safe Pro app (installable PWA) | `/pro` (the root `/` opens it) | Field agents / installers | Mobile number + OTP |
 | Admin dashboard | `/admin` | Kiddough team | Email + password |
+| Request endpoint | `/api/requests`, `/api/options` | The Kiddough store's booking page | Allowed websites only |
+
+## Connecting the Kiddough Shopify store
+
+The code to paste is in [shopify/](shopify/). Neither file edits theme code, and both go on a **copy** of the live theme first.
+
+1. **Booking page:** in Shopify, Online Store → Pages → Add page, title **Home Care** (URL `/pages/home-care`). In the theme editor open that page, Add section → **Custom Liquid**, and paste [shopify/home-care-page.liquid](shopify/home-care-page.liquid).
+   It loads services, prices, cities and time slots from this app, pre-fills logged-in customers' details, sends the request, and shows the **booking ID and the 4-digit completion code** the customer gives the Safe Pro when the work is done.
+2. **Two product buttons:** theme editor → Products → Default product → Product information → Add block → **Custom Liquid**, and paste [shopify/product-buttons.liquid](shopify/product-buttons.liquid). It adds **Book installation** and **Book servicing**, which open the booking page with the product, variant and SKU filled in.
+   To show them on collection product cards instead, see the note at the top of that file (that needs a small theme code edit).
+3. Preview the theme copy, place a test request, and check it appears in **Admin → Bookings**. Then publish.
+
+Requests are accepted from `https://kiddough.in`, `https://www.kiddough.in` and Shopify theme previews (`*.shopifypreview.com`). Add others, such as the store's `.myshopify.com` address, with `ALLOWED_ORIGINS`. They are rate-limited (10 per hour per visitor, 3 per hour per phone number), and a hidden field blocks simple spam bots. **Admin → Settings → Kiddough website connection** shows the endpoint and the last request received.
+
+The website codes `safety_check`, `installation` and `servicing` link the buttons to services; change prices and codes in Admin → Settings.
 
 ## Demo OTP and Aadhaar verification
 
 SMS and Aadhaar e-KYC are not connected yet, so both run in **demo mode** by default:
 
-- **Mobile OTP** (Safe Pro login and registration, customer booking): after "Send OTP", the 6-digit code appears in a yellow **Demo mode** box on the same screen, with a "Fill it in for me" button. No SMS is sent.
+- **Mobile OTP** (Safe Pro login and registration): after "Send OTP", the 6-digit code appears in a yellow **Demo mode** box on the same screen, with a "Fill it in for me" button. No SMS is sent.
 - **Aadhaar OTP** (Safe Pro registration): enter any 12-digit number starting with 2–9 and the OTP is shown on screen. Nothing is sent to UIDAI, and only the last 4 digits are saved. Admins see "OTP verified (demo)" so they still check the Aadhaar photo by hand.
 
 Codes expire after 10 minutes, allow 5 wrong tries, can be resent after 30 seconds, and are stored only as keyed hashes.
@@ -32,18 +54,15 @@ Codes expire after 10 minutes, allow 5 wrong tries, can be resent after 30 secon
 - Customer phone and full address appear only after the job is accepted. One-tap call and Google Maps.
 - Check in at the home (GPS recorded), upload before/after photos, add work notes and measurements.
 - Complete the job with the customer's 4-digit code, so a job can't be closed without the customer.
-- Earnings: this month, total, pending payout, paid, ratings.
+- See which product to install or service (sent by the store), plus the customer's notes.
+- Earnings: this month, total, pending payout, paid.
 
 **Admin dashboard**
-- Dashboard: unassigned bookings, pending Safe Pros, visits today, revenue, payouts due, rating, city-wise summary.
+- Dashboard: unassigned bookings, pending Safe Pros, visits today, revenue, payouts due, website requests this week, city-wise summary.
 - Safe Pros: filter by status/city, view the ID document, approve, reject or suspend (with a note the Safe Pro sees), last known location, job stats.
-- Bookings: filter, search, create a booking for phone-in customers, assign or reassign manually, **auto-assign** (same city → same pincode → online → least busy, skipping anyone who declined), cancel, see check-in/out GPS and photos, mark payouts paid, full timeline.
+- Bookings: requests from the website arrive automatically with the product and Shopify order number; filter, search, create a booking for phone-in customers, assign or reassign manually, **auto-assign** (same city → same pincode → online → least busy, skipping anyone who declined), cancel, see check-in/out GPS and photos, mark payouts paid, full timeline.
 - CSV export of bookings.
-- Settings: services with customer price and Safe Pro payout, cities, admin users, change password.
-
-**Customer site**
-- Book a service: service, address, city, pincode, date and time slot, consent.
-- Tracking page: status steps, assigned Safe Pro's first name, completion code, visit report with photos, star rating and feedback.
+- Settings: website connection status, services (website code, customer price, Safe Pro payout), cities, admin users, change password.
 
 ## Deploy on Vercel
 

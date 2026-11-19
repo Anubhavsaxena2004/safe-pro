@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { loginAdmin } from "@/app/admin/actions";
 import { ActionForm, SubmitButton } from "@/components/forms";
-import { Logo } from "@/components/site-header";
+import { Logo } from "@/components/logo";
 import { Field } from "@/components/ui";
 import { getAdmin } from "@/lib/auth";
 

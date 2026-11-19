@@ -10,9 +10,10 @@ export async function GET(req: NextRequest) {
   const city = req.nextUrl.searchParams.get("city") ?? "";
 
   const rows = await sql`
-    select b.ref, b.created_at, b.status, s.name as service, b.preferred_date, b.preferred_slot,
+    select b.ref, b.created_at, b.source, b.status, s.name as service, b.product_title, b.product_variant, b.product_sku,
+      b.shopify_order, b.preferred_date, b.preferred_slot,
       b.customer_name, b.customer_phone, b.customer_email, b.address, b.city, b.pincode,
-      p.name as safe_pro, b.price, b.pro_payout, b.payout_status, b.checkin_at, b.completed_at, b.rating, b.feedback
+      p.name as safe_pro, b.price, b.pro_payout, b.payout_status, b.checkin_at, b.completed_at, b.pro_notes
     from bookings b join services s on s.id = b.service_id left join pros p on p.id = b.pro_id
     where true
       ${status ? sql`and b.status = ${status}` : sql``}
@@ -21,9 +22,9 @@ export async function GET(req: NextRequest) {
     limit 10000`;
 
   const headers = [
-    "ref", "created_at", "status", "service", "preferred_date", "preferred_slot", "customer_name", "customer_phone",
-    "customer_email", "address", "city", "pincode", "safe_pro", "price", "pro_payout", "payout_status", "checkin_at",
-    "completed_at", "rating", "feedback",
+    "ref", "created_at", "source", "status", "service", "product_title", "product_variant", "product_sku", "shopify_order",
+    "preferred_date", "preferred_slot", "customer_name", "customer_phone", "customer_email", "address", "city", "pincode",
+    "safe_pro", "price", "pro_payout", "payout_status", "checkin_at", "completed_at", "pro_notes",
   ];
   const cell = (v: unknown) => {
     if (v == null) return "";
