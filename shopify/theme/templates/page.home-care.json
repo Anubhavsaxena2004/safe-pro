@@ -1,0 +1,11 @@
+{
+  "sections": {
+    "main": {
+      "type": "kiddough-home-care",
+      "settings": {}
+    }
+  },
+  "order": [
+    "main"
+  ]
+}

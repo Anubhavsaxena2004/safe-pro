@@ -99,6 +99,11 @@ export default async function AdminProsPage({ searchParams }: { searchParams: Pr
                       <Link href={`/admin/pros/${p.id}`} className="font-extrabold text-brand-700 hover:underline">
                         {p.name}
                       </Link>
+                      {p.is_demo && (
+                        <span className="ml-1.5">
+                          <Badge tone="violet">Demo</Badge>
+                        </span>
+                      )}
                       <div className="text-xs text-slate-500">{p.phone}</div>
                     </td>
                     <td>

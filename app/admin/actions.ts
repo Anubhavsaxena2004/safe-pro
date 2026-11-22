@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { createSession, destroySession, requireAdmin } from "@/lib/auth";
 import { findBestPro, getBooking, insertBooking, logEvent, parseBookingForm } from "@/lib/bookings";
 import { sql } from "@/lib/db";
+import { createDemoData, removeDemoData } from "@/lib/demo";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import type { FormState, ProStatus } from "@/lib/types";
 import { int, str } from "@/lib/utils";
@@ -195,6 +196,22 @@ export async function saveService(_prev: FormState, fd: FormData): Promise<FormS
   }
   refresh();
   return { message: "Saved." };
+}
+
+// ---------- Demo data ----------
+
+export async function addDemoData(_prev: FormState, _fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const result = await createDemoData(admin.name);
+  refresh();
+  return { message: `Demo data ready: ${result.pros} Safe Pros and ${result.bookings} bookings.` };
+}
+
+export async function clearDemoData(_prev: FormState, _fd: FormData): Promise<FormState> {
+  await requireAdmin();
+  const result = await removeDemoData();
+  refresh();
+  return { message: `Removed ${result.bookings} demo bookings and ${result.pros} demo Safe Pros.` };
 }
 
 export async function addCity(_prev: FormState, fd: FormData): Promise<FormState> {

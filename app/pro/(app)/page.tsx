@@ -65,6 +65,7 @@ function JobCard({ job, isToday }: { job: Booking; isToday: boolean }) {
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-extrabold text-slate-900">{job.service_name}</p>
+          {job.product_title && <p className="truncate text-sm font-bold text-brand-800">{job.product_title}</p>}
           <p className="text-sm text-slate-600">
             {fmtDate(job.preferred_date)} · {slotLabel(job.preferred_slot)}
           </p>

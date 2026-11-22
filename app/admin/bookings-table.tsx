@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookingStatusBadge, EmptyState } from "@/components/ui";
+import { Badge, BookingStatusBadge, EmptyState } from "@/components/ui";
 import type { Booking } from "@/lib/types";
 import { fmtDate, fmtDateTime, slotLabel } from "@/lib/utils";
 
@@ -25,6 +25,11 @@ export function BookingsTable({ bookings }: { bookings: Booking[] }) {
                 <Link href={`/admin/bookings/${b.id}`} className="font-extrabold text-brand-700 hover:underline">
                   {b.ref}
                 </Link>
+                {b.is_demo && (
+                  <span className="ml-1.5">
+                    <Badge tone="violet">Demo</Badge>
+                  </span>
+                )}
                 <div className="text-xs whitespace-nowrap text-slate-500">{fmtDateTime(b.created_at)}</div>
               </td>
               <td className="whitespace-nowrap">

@@ -18,7 +18,7 @@ Kiddough Shopify store (customers)            Safe Pro app (this project, on Ver
 
 ## Connecting the Kiddough Shopify store
 
-The code to paste is in [shopify/](shopify/). Neither file edits theme code, and both go on a **copy** of the live theme first.
+The code to paste is in [shopify/](shopify/). Neither file edits theme code, and both go on a **copy** of the live theme first. To install with the **Shopify CLI** through a collaborator account instead, follow [shopify/README.md](shopify/README.md).
 
 1. **Booking page:** in Shopify, Online Store → Pages → Add page, title **Home Care** (URL `/pages/home-care`). In the theme editor open that page, Add section → **Custom Liquid**, and paste [shopify/home-care-page.liquid](shopify/home-care-page.liquid).
    It loads services, prices, cities and time slots from this app, pre-fills logged-in customers' details, sends the request, and shows the **booking ID and the 4-digit completion code** the customer gives the Safe Pro when the work is done.
@@ -29,6 +29,15 @@ The code to paste is in [shopify/](shopify/). Neither file edits theme code, and
 Requests are accepted from `https://kiddough.in`, `https://www.kiddough.in` and Shopify theme previews (`*.shopifypreview.com`). Add others, such as the store's `.myshopify.com` address, with `ALLOWED_ORIGINS`. They are rate-limited (10 per hour per visitor, 3 per hour per phone number), and a hidden field blocks simple spam bots. **Admin → Settings → Kiddough website connection** shows the endpoint and the last request received.
 
 The website codes `safety_check`, `installation` and `servicing` link the buttons to services; change prices and codes in Admin → Settings.
+
+## Trying it out: demo data
+
+1. Log in at `/admin/login` with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from Vercel.
+2. **Settings → Demo data → Add demo data.** This creates:
+   - Safe Pros: **9000000001** Ravi (approved, Mumbai, online), **9000000002** Sunita (pending, so you can test approval), **9000000003** Arjun (approved, Delhi NCR)
+   - 5 bookings marked **Demo**: a new website request, one waiting for Ravi to accept, one scheduled for today, a completed one (with photo, unpaid payout), and a new one in Delhi NCR
+3. Open `/pro/login` (another browser or a private window), tap a demo account, then **Send OTP**. The code appears on screen. Demo jobs use completion code **1234**.
+4. **Settings → Demo data → Remove demo data** deletes exactly these rows. Do this before real use.
 
 ## Demo OTP and Aadhaar verification
 

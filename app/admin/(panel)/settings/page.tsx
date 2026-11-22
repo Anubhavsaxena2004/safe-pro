@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { addAdmin, addCity, changeAdminPassword, saveService, toggleCity } from "@/app/admin/actions";
+import { addAdmin, addCity, addDemoData, changeAdminPassword, clearDemoData, saveService, toggleCity } from "@/app/admin/actions";
 import { ActionForm, SubmitButton } from "@/components/forms";
 import { headers } from "next/headers";
 import { Badge, Card, Field, InfoList, PageTitle } from "@/components/ui";
 import { requireAdmin } from "@/lib/auth";
 import { allowedOrigins } from "@/lib/cors";
 import { sql } from "@/lib/db";
+import { DEMO_COMPLETION_CODE, demoStatus, listDemoPros } from "@/lib/demo";
 import type { City, Service } from "@/lib/types";
 import { fmtDateTime } from "@/lib/utils";
 
@@ -15,20 +16,68 @@ export default async function SettingsPage() {
   const me = await requireAdmin();
   const h = await headers();
   const base = `${h.get("x-forwarded-proto") ?? "https"}://${h.get("x-forwarded-host") ?? h.get("host")}`;
-  const [services, cities, admins, [intake]] = await Promise.all([
+  const [services, cities, admins, [intake], demo, demoPros] = await Promise.all([
     sql<Service[]>`select * from services order by sort_order, id`,
     sql<City[]>`select * from cities order by active desc, name`,
     sql<{ id: number; name: string; email: string; created_at: Date }[]>`select id, name, email, created_at from admins order by id`,
     sql<{ last: Date | null; week: number }[]>`
       select max(created_at) as last, (count(*) filter (where created_at > now() - interval '7 days'))::int as week
-      from bookings where source = 'shopify'`,
+      from bookings where source = 'shopify' and not is_demo`,
+    demoStatus(),
+    listDemoPros(),
   ]);
 
   return (
     <>
-      <PageTitle title="Settings" subtitle="Website connection, services, cities and admin users" />
+      <PageTitle title="Settings" subtitle="Demo data, website connection, services, cities and admin users" />
 
       <div className="space-y-6">
+        <Card title="Demo data" action={demo.bookings || demo.pros ? <Badge tone="violet">Loaded</Badge> : <Badge>Not loaded</Badge>}>
+          <p className="mb-3 text-sm text-slate-500">
+            Adds demo Safe Pros and 5 demo bookings in every status (new, waiting for acceptance, scheduled for today, completed, another city) so you
+            can try each flow. Demo rows are marked <Badge tone="violet">Demo</Badge> and removed in one click. Remove them before going live.
+          </p>
+          {demoPros.length > 0 && (
+            <div className="mb-4 overflow-x-auto rounded-xl border border-slate-200">
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Demo Safe Pro login</th>
+                    <th>Mobile number</th>
+                    <th>State</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {demoPros.map((p) => (
+                    <tr key={p.phone}>
+                      <td className="font-bold">{p.name}</td>
+                      <td className="font-mono">{p.phone}</td>
+                      <td>{p.status === "approved" ? `Approved · ${p.city}` : "Pending (approve it in Safe Pros)"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+                Log in at <code>/pro/login</code> with a number above; the OTP appears on screen. Demo jobs use completion code{" "}
+                <b className="font-mono">{DEMO_COMPLETION_CODE}</b>.
+              </p>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <ActionForm action={addDemoData}>
+              <SubmitButton pendingText="Adding…">{demo.bookings || demo.pros ? "Reset demo data" : "Add demo data"}</SubmitButton>
+            </ActionForm>
+            {/* The form stays mounted after removal so its "Removed …" message remains visible. */}
+            <ActionForm action={clearDemoData}>
+              {(demo.bookings > 0 || demo.pros > 0) && (
+                <SubmitButton variant="secondary" pendingText="Removing…" confirm="Remove all demo Safe Pros and demo bookings?">
+                  Remove demo data
+                </SubmitButton>
+              )}
+            </ActionForm>
+          </div>
+        </Card>
+
         <Card title="Kiddough website connection">
           <p className="mb-3 text-sm text-slate-500">
             Customers book on the Kiddough Shopify store. The booking page there sends each request here. Nothing is written back to the store.

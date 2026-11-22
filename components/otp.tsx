@@ -32,6 +32,8 @@ interface FlowProps<P extends string> {
   verifyLabel: string;
   verifiedSuffix?: string;
   demoNote: string;
+  /** One-tap values to fill in, e.g. demo accounts. */
+  presets?: { label: string; value: string }[];
   send: (purpose: P, value: string) => Promise<OtpSendResult>;
   verify: (purpose: P, value: string, code: string) => Promise<OtpVerifyResult>;
 }
@@ -148,6 +150,27 @@ function OtpFlow<P extends string>(props: FlowProps<P>) {
             )}
           </div>
           {props.hint && step === "enter" && <p className="text-xs text-slate-500">{props.hint}</p>}
+          {props.presets && props.presets.length > 0 && step === "enter" && (
+            <div className="rounded-xl border border-dashed border-violet-300 bg-violet-50 p-3">
+              <p className="text-[11px] font-extrabold tracking-wide text-violet-800 uppercase">Demo accounts · tap to fill</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {props.presets.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    data-demo-preset={p.value}
+                    onClick={() => {
+                      setValue(p.value);
+                      setError(null);
+                    }}
+                    className="rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-left text-xs font-bold text-violet-900"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {step === "sent" && (
             <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
@@ -208,10 +231,12 @@ export function PhoneOtp({
   purpose,
   label = "Mobile number",
   verifyLabel = "Verify",
+  presets,
 }: {
   purpose: "pro_login" | "pro_register";
   label?: string;
   verifyLabel?: string;
+  presets?: { label: string; value: string }[];
 }) {
   return (
     <OtpFlow
@@ -225,6 +250,7 @@ export function PhoneOtp({
       tokenName="phone_token"
       verifyLabel={verifyLabel}
       demoNote="no SMS sent"
+      presets={presets}
       send={sendPhoneOtp}
       verify={verifyPhoneOtp}
     />

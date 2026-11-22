@@ -143,6 +143,10 @@ alter table bookings add column if not exists product_sku     text not null defa
 alter table bookings add column if not exists product_url     text not null default '';
 alter table bookings add column if not exists shopify_order   text not null default '';
 
+-- Demo data (Admin → Settings → Demo data) is flagged so it can be removed in one click.
+alter table pros add column if not exists is_demo boolean not null default false;
+alter table bookings add column if not exists is_demo boolean not null default false;
+
 -- Rate limiting for the public request endpoint (IP stored only as a keyed hash).
 create table if not exists intake_log (
   id         serial primary key,

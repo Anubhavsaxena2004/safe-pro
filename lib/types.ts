@@ -24,6 +24,7 @@ export interface Pro {
   last_lat: number | null;
   last_lng: number | null;
   last_seen_at: Date | null;
+  is_demo: boolean;
   created_at: Date;
 }
 
@@ -65,6 +66,7 @@ export interface Booking {
   preferred_slot: string;
   notes: string;
   source: string;
+  is_demo: boolean;
   status: BookingStatus;
   pro_id: number | null;
   pro_name: string | null;
