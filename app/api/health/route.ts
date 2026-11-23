@@ -1,4 +1,4 @@
-import { sql } from "@/lib/db";
+import { findDatabaseEnv, sql } from "@/lib/db";
 import { isDemoAadhaar, isDemoOtp } from "@/lib/otp";
 
 export const dynamic = "force-dynamic";
@@ -9,9 +9,16 @@ export const dynamic = "force-dynamic";
  */
 export async function GET() {
   const secret = process.env.AUTH_SECRET ?? "";
+  const found = findDatabaseEnv();
+  // Names only (never values), to spot a database connected under another name or environment.
+  const dbLikeNames = Object.keys(process.env)
+    .filter((n) => /DATABASE|POSTGRES|^PG|NEON|SUPABASE/i.test(n))
+    .sort();
   const checks = {
+    environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
     auth_secret: secret.length >= 16 ? "ok" : "missing: set AUTH_SECRET (32+ random characters) in Vercel, then redeploy",
-    database: await checkDatabase(),
+    database: await checkDatabase(Boolean(found)),
+    database_variable: found ? found.name : dbLikeNames.length ? `none usable; database-related variables present: ${dbLikeNames.join(", ")}` : "none",
     admin_login:
       process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD
         ? "ok"
@@ -24,9 +31,9 @@ export async function GET() {
   return Response.json({ ok, ...checks }, { status: ok ? 200 : 503, headers: { "Cache-Control": "no-store" } });
 }
 
-async function checkDatabase(): Promise<string> {
-  if (!process.env.DATABASE_URL && !process.env.POSTGRES_URL) {
-    return "missing: connect a Postgres database (Vercel → Storage → Neon) or set DATABASE_URL, then redeploy";
+async function checkDatabase(configured: boolean): Promise<string> {
+  if (!configured) {
+    return "missing: connect a Postgres database to this environment (Vercel → Storage → Neon → Connect, tick Production) or set DATABASE_URL, then redeploy";
   }
   try {
     const [row] = await sql<{ tables: number }[]>`

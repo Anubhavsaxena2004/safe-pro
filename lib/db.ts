@@ -24,9 +24,27 @@ export function cleanDatabaseUrl(raw: string) {
   return url.toString();
 }
 
+const isPostgresUrl = (v: string | undefined): v is string => typeof v === "string" && /^postgres(ql)?:\/\//i.test(v.trim());
+
+/**
+ * Finds the database connection string. Vercel's Neon / Supabase integrations name it
+ * DATABASE_URL or POSTGRES_URL, or <PREFIX>_DATABASE_URL / <PREFIX>_POSTGRES_URL when a custom
+ * prefix was chosen while connecting. Pooled URLs are preferred over unpooled ones.
+ * (Same logic in scripts/migrate.mjs; keep them in sync.)
+ */
+export function findDatabaseEnv(env: NodeJS.ProcessEnv = process.env): { name: string; value: string } | null {
+  for (const name of ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL"]) {
+    if (isPostgresUrl(env[name])) return { name, value: env[name] };
+  }
+  const names = Object.keys(env).sort();
+  const pick = (re: RegExp) => names.find((n) => re.test(n) && isPostgresUrl(env[n]));
+  const name = pick(/_(DATABASE_URL|POSTGRES_URL|POSTGRES_PRISMA_URL)$/) ?? pick(/(DATABASE_URL_UNPOOLED|POSTGRES_URL_NON_POOLING)$/);
+  return name ? { name, value: env[name] as string } : null;
+}
+
 export function databaseUrl() {
-  const raw = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-  return raw ? cleanDatabaseUrl(raw) : null;
+  const found = findDatabaseEnv();
+  return found ? cleanDatabaseUrl(found.value) : null;
 }
 
 function client(): Sql {

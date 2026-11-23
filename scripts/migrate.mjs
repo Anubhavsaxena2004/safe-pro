@@ -37,13 +37,26 @@ function cleanDatabaseUrl(raw) {
   return url.toString();
 }
 
-const rawUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-if (!rawUrl) {
-  console.warn("[migrate] DATABASE_URL is not set, skipping database setup. The app will not work until it is set and you redeploy.");
-  process.exit(0);
+// Same as findDatabaseEnv() in lib/db.ts (keep in sync): DATABASE_URL / POSTGRES_URL, or the
+// same names with a custom prefix from Vercel's Storage integrations; pooled URLs first.
+function findDatabaseEnv(env) {
+  const isPg = (v) => typeof v === "string" && /^postgres(ql)?:\/\//i.test(v.trim());
+  for (const name of ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL"]) if (isPg(env[name])) return { name, value: env[name] };
+  const names = Object.keys(env).sort();
+  const pick = (re) => names.find((n) => re.test(n) && isPg(env[n]));
+  const name = pick(/_(DATABASE_URL|POSTGRES_URL|POSTGRES_PRISMA_URL)$/) ?? pick(/(DATABASE_URL_UNPOOLED|POSTGRES_URL_NON_POOLING)$/);
+  return name ? { name, value: env[name] } : null;
 }
 
-const sql = postgres(cleanDatabaseUrl(rawUrl), { max: 1, prepare: false, onnotice: () => {} });
+const found = findDatabaseEnv(process.env);
+if (!found) {
+  console.warn("[migrate] No database connection string found (DATABASE_URL / POSTGRES_URL), skipping database setup.");
+  console.warn("[migrate] The app will not work until a database is connected to this environment and you redeploy.");
+  process.exit(0);
+}
+console.log(`[migrate] Using ${found.name}`);
+
+const sql = postgres(cleanDatabaseUrl(found.value), { max: 1, prepare: false, onnotice: () => {} });
 try {
   await sql.unsafe(readFileSync(path.join(root, "db", "schema.sql"), "utf8"));
   console.log("[migrate] Database schema is up to date.");

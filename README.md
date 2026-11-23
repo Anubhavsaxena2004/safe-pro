@@ -97,7 +97,7 @@ Codes expire after 10 minutes, allow 5 wrong tries, can be resent after 30 secon
 | It says | Fix |
 |---|---|
 | `auth_secret: missing` | Add `AUTH_SECRET` (32+ random characters) to Environment Variables for **Production**, then redeploy |
-| `database: missing` | Connect a database under Storage (Neon), or add `DATABASE_URL`, then redeploy |
+| `database: missing` | Connect a database under Storage (Neon) and tick **Production** when connecting, or add `DATABASE_URL` for Production. Then redeploy. `database_variable` lists any database-related variable names it can see (never values). A custom prefix such as `STORAGE_DATABASE_URL` is picked up automatically. |
 | `tables are missing` | Redeploy; the build creates the tables. Or run `npm run db:migrate` locally against the same `DATABASE_URL` |
 | `cannot connect: …` | Check the `DATABASE_URL` value (use the pooled connection string) |
 
