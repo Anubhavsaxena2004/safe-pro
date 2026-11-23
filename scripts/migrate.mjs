@@ -43,8 +43,12 @@ function findDatabaseEnv(env) {
   const isPg = (v) => typeof v === "string" && /^postgres(ql)?:\/\//i.test(v.trim());
   for (const name of ["DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL"]) if (isPg(env[name])) return { name, value: env[name] };
   const names = Object.keys(env).sort();
-  const pick = (re) => names.find((n) => re.test(n) && isPg(env[n]));
-  const name = pick(/_(DATABASE_URL|POSTGRES_URL|POSTGRES_PRISMA_URL)$/) ?? pick(/(DATABASE_URL_UNPOOLED|POSTGRES_URL_NON_POOLING)$/);
+  const pick = (re, exclude) => names.find((n) => re.test(n) && !exclude?.test(n) && isPg(env[n]));
+  const name =
+    pick(/_(DATABASE_URL|POSTGRES_URL|POSTGRES_PRISMA_URL)$/) ?? // e.g. STORAGE_DATABASE_URL
+    pick(/_URL$/, /UNPOOLED|NON_POOLING|NO_SSL/) ?? // Neon "Custom Prefix" + "_URL", e.g. STORAGE_URL
+    pick(/UNPOOLED|NON_POOLING/) ??
+    pick(/./); // last resort: any variable holding a postgres:// URL
   return name ? { name, value: env[name] } : null;
 }
 

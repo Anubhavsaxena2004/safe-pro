@@ -37,8 +37,12 @@ export function findDatabaseEnv(env: NodeJS.ProcessEnv = process.env): { name: s
     if (isPostgresUrl(env[name])) return { name, value: env[name] };
   }
   const names = Object.keys(env).sort();
-  const pick = (re: RegExp) => names.find((n) => re.test(n) && isPostgresUrl(env[n]));
-  const name = pick(/_(DATABASE_URL|POSTGRES_URL|POSTGRES_PRISMA_URL)$/) ?? pick(/(DATABASE_URL_UNPOOLED|POSTGRES_URL_NON_POOLING)$/);
+  const pick = (re: RegExp, exclude?: RegExp) => names.find((n) => re.test(n) && !exclude?.test(n) && isPostgresUrl(env[n]));
+  const name =
+    pick(/_(DATABASE_URL|POSTGRES_URL|POSTGRES_PRISMA_URL)$/) ?? // e.g. STORAGE_DATABASE_URL
+    pick(/_URL$/, /UNPOOLED|NON_POOLING|NO_SSL/) ?? // Neon "Custom Prefix" + "_URL", e.g. STORAGE_URL
+    pick(/UNPOOLED|NON_POOLING/) ??
+    pick(/./); // last resort: any variable holding a postgres:// URL
   return name ? { name, value: env[name] as string } : null;
 }
 
